@@ -1,0 +1,72 @@
+module.exports = {
+    extends: [
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended",
+      "plugin:prettier/recommended",
+      "plugin:import/recommended",
+    ],
+    env: {
+      browser: true,
+      es6: true,
+      jest: true,
+      node: true,
+    },
+    parser: "@typescript-eslint/parser",
+    plugins: ["@typescript-eslint"],
+    ignorePatterns: [
+      "src/api/v1/gen/*",
+      "src/api/v2/gen/*",
+      "**/*.svg",
+      "**/*.scss",
+      "**/*.md",
+      "**/*.jpg",
+      "**/*.png",
+    ],
+    parserOptions: {
+      sourceType: "module",
+      ecmaVersion: 6,
+    },
+    rules: {
+      curly: ["error", "all"],
+      "@typescript-eslint/ban-ts-comment": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/prefer-ts-expect-error": "error",
+      "no-console": 1,
+      "import/order": [
+        "warn",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+          ],
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
+      ],
+    },
+    overrides: [
+      {
+        files: ["*.ts", "*.tsx", "testcafe/**/*"],
+        rules: {
+          "no-undef": "off",
+        },
+      },
+    ],
+    settings: {
+      "import/resolver": {
+        node: {
+          extensions: [".js", ".jsx", ".ts", ".d.ts", ".tsx"],
+          paths: ["."],
+          moduleDirectory: ["node_modules", "src"],
+        },
+      },
+      react: {
+        version: "detect",
+      },
+    },
+  };
