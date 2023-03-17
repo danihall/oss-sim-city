@@ -18,10 +18,11 @@
     "react-router-dom": "^6.8.1",
     "react-scripts": "5.0.1",
     "sass": "^1.58.1",
+    "the-new-css-reset": "^1.8.4",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "dev": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "predeploy": "npm run build",
@@ -58,6 +59,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-react": "^7.32.2",
+    "prettier": "^2.8.4",
     "react-test-renderer": "^18.2.0",
     "typescript": "^4.9.5"
   }
