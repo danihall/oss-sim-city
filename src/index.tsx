@@ -1,16 +1,16 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Provider } from "react-redux";
+//import { Provider } from "react-redux";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 
 import "the-new-css-reset";
 import "./index.module.scss";
 
-import { Nav } from "./components/_index";
+import { Nav } from "./components/Nav/Nav";
 import LandingPage from "./pages/LandingPage";
 import StyleguidePage from "./pages/StyleguidePage";
 
-const Root = (): JSX.Element => {
+const Root = () => {
   return (
     <>
       <Nav />
@@ -25,7 +25,6 @@ const router = createBrowserRouter([
     element: <Root />,
     children: [
       {
-        path: "/",
         element: <LandingPage />,
       },
       {

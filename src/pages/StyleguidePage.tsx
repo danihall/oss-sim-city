@@ -1,20 +1,21 @@
-import * as components from "../components/_index";
+//console.log(components.TextBlock({ content: "prout" }));
+import { Nav } from "../components/Nav/Nav";
+import { TextBlock } from "../components/TextBlock/TextBlock";
 
-const StyleguidePage = (): JSX.Element => {
+const StyleguidePage = () => {
   return (
     <>
       <h1>Styleguide</h1>
-      <ol>
-        {Object.entries(components).map(([name, component], index) => {
-          const Component = component;
-          return (
-            <li key={index.toString()}>
-              <div>{name}</div>
-              <Component />
-            </li>
-          );
-        })}
-      </ol>
+      <div>
+        <ul>
+          <li>
+            <Nav />
+          </li>
+          <li>
+            <TextBlock>coucou sim city</TextBlock>
+          </li>
+        </ul>
+      </div>
     </>
   );
 };

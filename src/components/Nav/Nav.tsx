@@ -1,16 +1,23 @@
+import { NavLink } from "react-router-dom";
+
+import { PATHS } from "../../constants";
+
+import css from "./Nav.module.scss";
+
 const Nav = () => {
   return (
-    <div>
-      <nav>
-        <ul>
-          <li>start a new city</li>
-          <li>load a city</li>
-          <li>credits</li>
-          <li>dev log</li>
-        </ul>
-      </nav>
-    </div>
+    <nav className={css["app-nav"]}>
+      <ul>
+        {Object.entries(PATHS).map(([path, text]) => {
+          return (
+            <li key={path}>
+              <NavLink to={path}>{text}</NavLink>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
   );
 };
 
-export default Nav;
+export { Nav };
