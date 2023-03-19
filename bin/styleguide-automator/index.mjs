@@ -1,13 +1,13 @@
-import { COMPONENTS_PATH, getComponentSpecs } from "./helpers.mjs";
+import { componentTemplate } from "./componentTemplate.mjs";
+import {
+  COMPONENTS_PATH,
+  PAGES_PATH,
+  PATH_FROM_PAGES_TO_COMPONENTS,
+  getComponentSpecs,
+} from "./helpers.mjs";
 
 (async () => {
   const component_specs = await getComponentSpecs();
-  const test = JSON.parse(
-    `{${component_specs[1].props
-      .join("")
-      .trim()
-      .replaceAll(";", ",")
-      .slice(0, -1)}}`
-  );
+  const test = componentTemplate(component_specs[0]);
   console.log(test);
 })();

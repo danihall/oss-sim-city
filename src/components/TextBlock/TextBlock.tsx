@@ -1,6 +1,6 @@
 interface ITextBlockProps {
   children: React.ReactNode;
-  fakeProp: string;
+  fake_Prop: string;
 }
 
 const TextBlock = ({ children }: ITextBlockProps) => {
