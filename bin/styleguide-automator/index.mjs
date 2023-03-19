@@ -9,5 +9,6 @@ import {
 (async () => {
   const component_specs = await getComponentSpecs();
   const test = componentTemplate(component_specs[0]);
-  console.log(test);
+  const test2 = componentTemplate(component_specs[1]);
+  //console.log(test);
 })();

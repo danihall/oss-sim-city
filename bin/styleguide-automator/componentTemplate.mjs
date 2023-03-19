@@ -1,11 +1,21 @@
-const template = (chunks, ...rest) => {
+const set = new WeakSet();
+const template = (template) => {
+  if (set.has(template)) {
+    console.log("known template: ", template);
+  } else {
+    set.add(template);
+    console.log("new template");
+  }
+  /*
   return (
     chunks[0] + rest[0] + chunks[1] + rest[1] + chunks[2] + rest[2] + chunks[3]
   );
+  */
 };
 
 const componentTemplate = ({ component, props }) => {
   let props_entries = Object.entries(props);
+  console.log(props_entries);
 
   props_entries = props_entries.length
     ? props_entries
