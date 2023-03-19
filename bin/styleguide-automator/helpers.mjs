@@ -35,13 +35,13 @@ async function _getFileContent(component_folder) {
     props: [],
   };
 
-  for (let i = 0; i < file_content_splitted.length; i++) {
+  parent_loop: for (let i = 0; i < file_content_splitted.length; i++) {
     if (file_content_splitted[i].includes("interface")) {
       for (let j = i + 1; j < file_content_splitted.length; j++) {
         if (file_content_splitted[j] !== "}") {
           component_and_props.props.push(file_content_splitted[j]);
         } else {
-          break;
+          break parent_loop;
         }
       }
     }

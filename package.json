@@ -2,7 +2,6 @@
   "name": "oss-sim-city",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.3",
     "@testing-library/jest-dom": "^5.16.5",
@@ -25,7 +24,7 @@
   "scripts": {
     "dev": "react-scripts start",
     "build": "react-scripts build",
-    "styleguide": "node bin/styleguide-automator/index",
+    "styleguide": "node bin/styleguide-automator/index.mjs",
     "test": "react-scripts test",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",

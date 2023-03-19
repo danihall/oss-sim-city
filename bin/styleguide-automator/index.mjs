@@ -1,4 +1,4 @@
-import { COMPONENTS_PATH, getComponentSpecs } from "./helpers.js";
+import { COMPONENTS_PATH, getComponentSpecs } from "./helpers.mjs";
 
 (async () => {
   const component_specs = await getComponentSpecs();
