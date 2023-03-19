@@ -1,6 +1,13 @@
-import { COMPONENTS_PATH, getComponentFiles } from "./helpers.js";
+import { COMPONENTS_PATH, getComponentSpecs } from "./helpers.js";
 
 (async () => {
-  const component_files = await getComponentFiles();
-  console.log(component_files);
+  const component_specs = await getComponentSpecs();
+  const test = JSON.parse(
+    `{${component_specs[1].props
+      .join("")
+      .trim()
+      .replaceAll(";", ",")
+      .slice(0, -1)}}`
+  );
+  console.log(test);
 })();
