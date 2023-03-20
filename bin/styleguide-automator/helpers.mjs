@@ -7,30 +7,13 @@ import {
 const TYPESCRIPT_INTERFACE = "interface";
 
 /**
- * @param {string} component_folder
- * @returns {Array}
+ * @param {object} acc
+ * @param {string} cur
+ * @returns {object}
  */
-const getFileContent = async (component_folder) => {
-  const component_files = await fs.promises.readdir(
-    `${COMPONENTS_PATH}/${component_folder}`
-  );
-
-  const effective_file = component_files.find(
-    (file) => file === `${component_folder}.tsx`
-  );
-
-  const file_content = await fs.promises
-    .readFile(
-      `${COMPONENTS_PATH}/${component_folder}/${effective_file}`,
-      "utf-8"
-    )
-    .then((content) => content.split("\n"));
-
-  return _makeComponentAndPropsObject(
-    component_folder,
-    effective_file,
-    file_content
-  );
+const _makePropsObject = (acc, cur) => {
+  const [key, value] = cur.split(":");
+  return { ...acc, [key.trim()]: value.replace(";", "").trim() };
 };
 
 /**
@@ -44,9 +27,10 @@ const _makeComponentAndPropsObject = (
   effective_file,
   file_content
 ) => {
+  const name = effective_file.replace(".tsx", "");
   const component_and_props = {
-    component_name: effective_file.replace(".tsx", ""),
-    path: `${PATH_FROM_STYLEGUIDE_TO_COMPONENTS}/${component_folder}/${effective_file}`,
+    component_name: name,
+    path: `${PATH_FROM_STYLEGUIDE_TO_COMPONENTS}/${component_folder}/${name}`,
     props: {},
   };
   const _props = [];
@@ -71,13 +55,30 @@ const _makeComponentAndPropsObject = (
 };
 
 /**
- * @param {object} acc
- * @param {string} cur
- * @returns {object}
+ * @param {string} component_folder
+ * @returns {Array}
  */
-const _makePropsObject = (acc, cur) => {
-  const [key, value] = cur.split(":");
-  return { ...acc, [key.trim()]: value.replace(";", "").trim() };
+const getFileContent = async (component_folder) => {
+  const component_files = await fs.promises.readdir(
+    `${COMPONENTS_PATH}/${component_folder}`
+  );
+
+  const effective_file = component_files.find(
+    (file) => file === `${component_folder}.tsx`
+  );
+
+  const file_content = await fs.promises
+    .readFile(
+      `${COMPONENTS_PATH}/${component_folder}/${effective_file}`,
+      "utf-8"
+    )
+    .then((content) => content.split("\n"));
+
+  return _makeComponentAndPropsObject(
+    component_folder,
+    effective_file,
+    file_content
+  );
 };
 
 export { getFileContent };

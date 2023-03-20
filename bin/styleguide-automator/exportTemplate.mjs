@@ -12,7 +12,7 @@ const _template = (template, ...rest) => {
  * @param {string} params.path
  * @returns {string}
  */
-let createExportStatement = ({ component_name, path }) =>
+const createExportStatement = ({ component_name, path }) =>
   _template`export {${component_name}} from "${path}";`;
 
 export { createExportStatement };

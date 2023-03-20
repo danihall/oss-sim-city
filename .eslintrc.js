@@ -14,6 +14,7 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
   ignorePatterns: [
+    "src/pages/StyleguidePage/index.ts",
     "src/api/v1/gen/*",
     "src/api/v2/gen/*",
     "**/*.svg",
