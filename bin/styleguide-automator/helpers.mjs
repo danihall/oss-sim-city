@@ -1,12 +1,9 @@
 import fs from "node:fs";
-import path from "node:path";
 
-const COMPONENTS_PATH = "src/components";
-const STYLEGUIDE_PATH = "src/pages";
-const PATH_FROM_STYLEGUIDE_TO_COMPONENTS = path.relative(
-  STYLEGUIDE_PATH,
-  COMPONENTS_PATH
-);
+import {
+  COMPONENTS_PATH,
+  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
+} from "./paths.mjs";
 const TYPESCRIPT_INTERFACE = "interface";
 
 /**
@@ -15,7 +12,7 @@ const TYPESCRIPT_INTERFACE = "interface";
  */
 const getFileContent = async (component_folder) => {
   const component_files = await fs.promises.readdir(
-    path.resolve(`${COMPONENTS_PATH}/${component_folder}`)
+    `${COMPONENTS_PATH}/${component_folder}`
   );
 
   const effective_file = component_files.find(
@@ -24,7 +21,7 @@ const getFileContent = async (component_folder) => {
 
   const file_content = await fs.promises
     .readFile(
-      path.resolve(`${COMPONENTS_PATH}/${component_folder}/${effective_file}`),
+      `${COMPONENTS_PATH}/${component_folder}/${effective_file}`,
       "utf-8"
     )
     .then((content) => content.split("\n"));
@@ -80,12 +77,7 @@ const _makeComponentAndPropsObject = (
  */
 const _makePropsObject = (acc, cur) => {
   const [key, value] = cur.split(":");
-  return { ...acc, [key.trim()]: value.trim() };
+  return { ...acc, [key.trim()]: value.replace(";", "").trim() };
 };
 
-export {
-  COMPONENTS_PATH,
-  STYLEGUIDE_PATH,
-  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-  getFileContent,
-};
+export { getFileContent };
