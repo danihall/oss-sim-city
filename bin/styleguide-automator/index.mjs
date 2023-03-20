@@ -3,12 +3,15 @@ import process from "node:process";
 
 import { createExportStatement } from "./exportTemplate.mjs";
 import { getFileContent } from "./helpers.mjs";
-import {
-  COMPONENTS_PATH,
-  STYLEGUIDE_PATH,
-  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-} from "./paths.mjs";
+import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
 import { PROP_TYPES_MAP } from "./propTypesMap.mjs";
+
+/**
+ * @TODO
+ * Fully handle case for optional props where ( number of possible configs === Math.pow(2, optional_props_count) )
+ * Handle case when a prop is a callback, eg: type is () => void. Remove it from props, probably in helpers.mjs.
+ * Add console.logs of each component name being processed + style console.logs and console.errors.
+ */
 
 /**
  * @param {Array} entry
@@ -18,10 +21,6 @@ const transformComponentSpecs = (entry) => {
   const [, { component_name, props }] = entry;
   const props_as_array = Object.entries(props);
   const fake_props = [Object.fromEntries(props_as_array.map(makeFakeProps))];
-
-  if (!Object.keys(fake_props[0]).length) {
-    return [component_name, { props_variants: [] }];
-  }
 
   const optional_props = Object.keys(fake_props[0]).filter(getOptionalKey);
   if (optional_props.length) {
@@ -69,6 +68,9 @@ const isNotOptionalProp = function ([prop_name]) {
   return prop_name !== this.optional_prop;
 };
 
+/**
+ * @note this IIFE will execute whan you input "yarn styleguide". @see package.json->scripts
+ */
 (async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
@@ -91,7 +93,7 @@ const isNotOptionalProp = function ([prop_name]) {
     ),
     fs.promises.writeFile(
       `${STYLEGUIDE_PATH}/componentsToRender.json`,
-      JSON.stringify(components_render_specs)
+      JSON.stringify(components_render_specs, null, 2)
     ),
   ])
     .then(() =>
@@ -100,7 +102,7 @@ const isNotOptionalProp = function ([prop_name]) {
           performance.now() - t1
         )
           .toString()
-          .slice(0, 4)}ms `
+          .slice(0, 4)}ms`
       )
     )
     .catch((reason) => (console.error(reason), process.exit(1)));
