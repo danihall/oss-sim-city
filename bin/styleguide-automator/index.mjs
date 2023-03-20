@@ -1,14 +1,21 @@
-import { componentTemplate } from "./componentTemplate.mjs";
+import fs from "node:fs";
+import path from "node:path";
+
 import {
   COMPONENTS_PATH,
-  PAGES_PATH,
-  PATH_FROM_PAGES_TO_COMPONENTS,
-  getComponentSpecs,
+  STYLEGUIDE_PATH,
+  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
+  getFileContent,
 } from "./helpers.mjs";
+import { importTemplate } from "./importTemplate.mjs";
 
 (async () => {
-  const component_specs = await getComponentSpecs();
-  const test = componentTemplate(component_specs[0]);
-  const test2 = componentTemplate(component_specs[1]);
-  //console.log(test);
+  const component_folders = await fs.promises.readdir(
+    path.resolve(COMPONENTS_PATH)
+  );
+
+  const component_specs = await Promise.all(
+    component_folders.map(getFileContent)
+  );
+  console.log(component_specs);
 })();

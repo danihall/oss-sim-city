@@ -7,8 +7,8 @@ import "the-new-css-reset";
 import "./index.module.scss";
 
 import { Nav } from "./components/Nav/Nav";
-import LandingPage from "./pages/LandingPage";
-import StyleguidePage from "./pages/StyleguidePage";
+import LandingPage from "./pages/LandingPage/LandingPage";
+import StyleguidePage from "./pages/StyleguidePage/StyleguidePage";
 
 const Root = () => {
   return (

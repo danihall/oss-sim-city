@@ -2,26 +2,18 @@ import fs from "node:fs";
 import path from "node:path";
 
 const COMPONENTS_PATH = "src/components";
-const PAGES_PATH = "src/pages";
-const PATH_FROM_PAGES_TO_COMPONENTS = path.relative(
-  PAGES_PATH,
+const STYLEGUIDE_PATH = "src/pages";
+const PATH_FROM_STYLEGUIDE_TO_COMPONENTS = path.relative(
+  STYLEGUIDE_PATH,
   COMPONENTS_PATH
 );
 const TYPESCRIPT_INTERFACE = "interface";
-
-const getComponentSpecs = async () => {
-  const component_folders = await fs.promises.readdir(
-    path.resolve(COMPONENTS_PATH)
-  );
-
-  return Promise.all(component_folders.map(_getFileContent));
-};
 
 /**
  * @param {string} component_folder
  * @returns {Array}
  */
-const _getFileContent = async (component_folder) => {
+const getFileContent = async (component_folder) => {
   const component_files = await fs.promises.readdir(
     path.resolve(`${COMPONENTS_PATH}/${component_folder}`)
   );
@@ -37,8 +29,27 @@ const _getFileContent = async (component_folder) => {
     )
     .then((content) => content.split("\n"));
 
+  return _makeComponentAndPropsObject(
+    component_folder,
+    effective_file,
+    file_content
+  );
+};
+
+/**
+ * @param {string} component_folder
+ * @param {string} effective_file
+ * @param {string} file_content
+ * @returns {object}
+ */
+const _makeComponentAndPropsObject = (
+  component_folder,
+  effective_file,
+  file_content
+) => {
   const component_and_props = {
-    component: effective_file.replace(".tsx", ""),
+    component_name: effective_file.replace(".tsx", ""),
+    path: `${PATH_FROM_STYLEGUIDE_TO_COMPONENTS}/${component_folder}/${effective_file}`,
     props: {},
   };
   const _props = [];
@@ -62,6 +73,11 @@ const _getFileContent = async (component_folder) => {
   return component_and_props;
 };
 
+/**
+ * @param {object} acc
+ * @param {string} cur
+ * @returns {object}
+ */
 const _makePropsObject = (acc, cur) => {
   const [key, value] = cur.split(":");
   return { ...acc, [key.trim()]: value.trim() };
@@ -69,7 +85,7 @@ const _makePropsObject = (acc, cur) => {
 
 export {
   COMPONENTS_PATH,
-  PAGES_PATH,
-  PATH_FROM_PAGES_TO_COMPONENTS,
-  getComponentSpecs,
+  STYLEGUIDE_PATH,
+  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
+  getFileContent,
 };
