@@ -1,0 +1,14 @@
+{
+  "Nav": {
+    "fake_props_variant": [
+      {}
+    ]
+  },
+  "TextBlock": {
+    "fake_props_variant": [
+      {
+        "children": "Text that can be contained in a HTMLElement"
+      }
+    ]
+  }
+}

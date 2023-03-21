@@ -1,7 +1,5 @@
-import { Not } from "../../custom-types";
-
 interface ITextBlockProps {
-  children: Not<null | undefined | boolean, React.ReactNode>;
+  children: React.ReactNode;
 }
 
 const TextBlock = ({ children }: ITextBlockProps) => {
@@ -9,4 +7,3 @@ const TextBlock = ({ children }: ITextBlockProps) => {
 };
 
 export { TextBlock };
-export type { ITextBlockProps };
