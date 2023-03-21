@@ -10,10 +10,10 @@ const StyleguidePage = () => {
       <h1>Styleguide</h1>
       <div>
         {Object.entries(components_data).map(
-          ([component_name, { props_variants }]) => {
+          ([component_name, { fake_props_variant }]) => {
             const Component = components[component_name as TComponent];
 
-            return props_variants.map((props, index) => {
+            return fake_props_variant.map((props, index) => {
               const { children, ...props_to_apply } = props as any;
               return (
                 <div key={index.toString()}>

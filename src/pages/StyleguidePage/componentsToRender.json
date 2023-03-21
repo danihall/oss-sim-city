@@ -1,16 +1,13 @@
 {
   "Nav": {
-    "props_variants": [
+    "fake_props_variant": [
       {}
     ]
   },
   "TextBlock": {
-    "props_variants": [
+    "fake_props_variant": [
       {
-        "children": "Text that can be contained in a HTMLElement",
-        "fake_Prop": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-        "sisi": 1679405954033,
-        "test": true
+        "children": "Text that can be contained in a HTMLElement"
       }
     ]
   }

@@ -13,7 +13,10 @@ const TYPESCRIPT_INTERFACE = "interface";
  */
 const _makePropsObject = (acc, cur) => {
   const [key, value] = cur.split(":");
-  return { ...acc, [key.trim()]: value.replace(";", "").trim() };
+  return {
+    ...acc,
+    [key.replace("?", "").trim()]: value.replace(";", "").trim(),
+  };
 };
 
 /**
