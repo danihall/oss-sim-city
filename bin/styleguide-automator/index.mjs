@@ -8,7 +8,6 @@ import { PROP_TYPES_MAP } from "./propTypesMap.mjs";
 
 /**
  * @TODO
- * Fully handle case for optional props where ( number of possible configs === Math.pow(2, optional_props_count) )
  * Handle case when a prop is a callback, eg: type is () => void. Remove it from props, probably in helpers.mjs.
  * Add console.logs of each component name being processed + style console.logs and console.errors.
  */
@@ -22,14 +21,6 @@ const transformComponentSpecs = (entry) => {
   const props_as_array = Object.entries(props);
   const fake_props = [Object.fromEntries(props_as_array.map(makeFakeProps))];
 
-  const optional_props = Object.keys(fake_props[0]).filter(getOptionalKey);
-  if (optional_props.length) {
-    optional_props.forEach(addPropsVariantConfig, {
-      fake_props,
-      props_as_array,
-    });
-  }
-
   return [component_name, { props_variants: fake_props }];
 };
 
@@ -37,36 +28,10 @@ const transformComponentSpecs = (entry) => {
  * @param {Array}
  * @returns {Array}
  */
-const makeFakeProps = ([prop_name, type]) => [prop_name, PROP_TYPES_MAP[type]];
-
-/**
- * @param {string} prop_key
- * @returns {boolean}
- */
-const getOptionalKey = (prop_key) => prop_key.includes("?");
-
-/**
- * @this {object}
- * @param {string} optional_prop
- */
-const addPropsVariantConfig = function (optional_prop) {
-  this.fake_props.push(
-    Object.fromEntries(
-      this.props_as_array
-        .filter(isNotOptionalProp, { optional_prop })
-        .map(makeFakeProps)
-    )
-  );
-};
-
-/**
- * @this {object}
- * @param {Array}
- * @returns {boolean}
- */
-const isNotOptionalProp = function ([prop_name]) {
-  return prop_name !== this.optional_prop;
-};
+const makeFakeProps = ([prop_name, type]) => [
+  prop_name.replace("?", ""),
+  PROP_TYPES_MAP[type],
+];
 
 /**
  * @note this IIFE will execute whan you input "yarn styleguide". @see package.json->scripts

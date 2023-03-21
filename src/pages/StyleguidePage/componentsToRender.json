@@ -8,24 +8,9 @@
     "props_variants": [
       {
         "children": "Text that can be contained in a HTMLElement",
-        "fake_Prop?": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-        "sisi?": 1679353414771,
-        "test?": true
-      },
-      {
-        "children": "Text that can be contained in a HTMLElement",
-        "sisi?": 1679353414771,
-        "test?": true
-      },
-      {
-        "children": "Text that can be contained in a HTMLElement",
-        "fake_Prop?": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-        "test?": true
-      },
-      {
-        "children": "Text that can be contained in a HTMLElement",
-        "fake_Prop?": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-        "sisi?": 1679353414771
+        "fake_Prop": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+        "sisi": 1679405954033,
+        "test": true
       }
     ]
   }
