@@ -9,11 +9,6 @@ import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 import { PROP_TYPES_MAP } from "./utils/propTypesMap.mjs";
 
 /**
- * @TODO
- * style console.logs and console.errors.
- */
-
-/**
  * @param {Array} entry
  * @returns {Array}
  */

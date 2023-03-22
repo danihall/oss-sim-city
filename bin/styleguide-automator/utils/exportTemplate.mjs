@@ -1,10 +1,16 @@
 /**
- * @param {TemplateStringsArray} template
+ * @param {TemplateStringsArray} static_chunks
  * @param  {Array} rest
  * @returns {string}
  */
-const _template = (template, ...rest) => {
-  return template.map((part, index) => part + (rest[index] ?? "")).join("");
+const _template = (static_chunks, ...rest) => {
+  const string_as_array = [];
+
+  for (let i = 0; i < static_chunks.length; i++) {
+    string_as_array.push(static_chunks[i] + (rest[i] ?? ""));
+  }
+
+  return string_as_array.join("");
 };
 
 /**
