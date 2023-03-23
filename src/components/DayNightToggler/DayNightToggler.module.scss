@@ -5,11 +5,9 @@
     cursor: pointer;
     overflow: hidden;
 
-    &[aria-pressed="false"] {
-        background-color: yellow;
-    }
-
     &[aria-pressed="true"] {
-        background-color: violet;
+        &>svg {
+            fill: blue;
+        }
     }
 }

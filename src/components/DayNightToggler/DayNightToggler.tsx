@@ -1,7 +1,5 @@
 import { useState } from "react";
 
-import { DayNightSVG } from "../_icons/DayNightSVG/DayNightSVG";
-
 import css from "./DayNightToggler.module.scss";
 
 const DayNightToggler = () => {
@@ -16,7 +14,7 @@ const DayNightToggler = () => {
       aria-pressed={is_pressed}
     >
       toggle between day and night
-      <DayNightSVG is_night={is_pressed} />
+      <svg aria-hidden="true"></svg>
     </button>
   );
 };
