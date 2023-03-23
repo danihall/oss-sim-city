@@ -1,0 +1,15 @@
+.button-day-night {
+    font-size: 0;
+    width: 100px;
+    height: 40px;
+    cursor: pointer;
+    overflow: hidden;
+
+    &[aria-pressed="false"] {
+        background-color: yellow;
+    }
+
+    &[aria-pressed="true"] {
+        background-color: violet;
+    }
+}
