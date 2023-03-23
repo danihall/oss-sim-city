@@ -1,4 +1,9 @@
 {
+  "DayNightToggler": {
+    "fake_props_variant": [
+      {}
+    ]
+  },
   "Nav": {
     "fake_props_variant": [
       {}
