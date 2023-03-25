@@ -60,9 +60,6 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => [
   PROP_TYPES_MAP[type],
 ];
 
-/**
- * @note this IIFE will execute whan you input "yarn styleguide". @see package.json->scripts
- */
 (async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
