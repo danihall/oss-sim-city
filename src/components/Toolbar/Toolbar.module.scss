@@ -1,6 +1,8 @@
 .toolbar {
+    display: grid;
+
     &-dropdown-button {
-        display: flex;
+        //
     }
 
     &-tool-input {
