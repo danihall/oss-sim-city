@@ -1,4 +1,4 @@
-const LandingPage = (): JSX.Element => {
+const LandingPage = () => {
   return <h1>welcome to oss sim city!</h1>;
 };
 

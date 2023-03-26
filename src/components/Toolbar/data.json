@@ -1,0 +1,29 @@
+[
+    {
+        "id": 1,
+        "text": "sisi",
+        "img_path": "/wesh.jpg"
+    },
+    {
+        "id": 2,
+        "text": "lol",
+        "img_path": "/prout.jpg",
+        "children_inputs": [
+            {
+                "id": 3,
+                "text": "3",
+                "img_path": "/we3sh.jpg"
+            },
+            {
+                "id": 4,
+                "text": "si4si",
+                "img_path": "/w4esh.jpg"
+            },
+            {
+                "id": 5,
+                "text": "si5si",
+                "img_path": "/5.jpg"
+            }
+        ]
+    }
+]
