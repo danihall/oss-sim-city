@@ -7,7 +7,6 @@ import "the-new-css-reset";
 import "./index.module.scss";
 
 import { Nav } from "./components/Nav/Nav";
-import { Toolbar } from "./components/Toolbar";
 import LandingPage from "./pages/LandingPage/LandingPage";
 import StyleguidePage from "./pages/StyleguidePage/StyleguidePage";
 
@@ -15,7 +14,6 @@ const Root = () => {
   return (
     <>
       <Nav />
-      <Toolbar />
       <Outlet />
     </>
   );
