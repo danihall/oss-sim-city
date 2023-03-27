@@ -15,12 +15,12 @@ const ToolbarDropdown = ({
 }: IToolbarDropdownProps) => {
   return (
     <details className={css["button-tools-details"]}>
-      <summary aria-haspopup="menu">
+      <summary>
         <img src={TOOLBAR_IMG_PATH + img_path} aria-hidden="true" />
         {text}
       </summary>
 
-      <menu role="menu">
+      <menu>
         {children_inputs.map(({ id, text, img_path }) => {
           return (
             <li key={id}>
