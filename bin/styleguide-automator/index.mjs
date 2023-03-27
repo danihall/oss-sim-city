@@ -1,12 +1,19 @@
 import fs from "node:fs";
 import process from "node:process";
 
-import chalk from "chalk";
+import c from "chalk";
 
 import { createExportStatement } from "./utils/exportTemplate.mjs";
 import { getComponentSpecs } from "./utils/helpers.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
-import { PROP_TYPES_MAP } from "./utils/propTypesMap.mjs";
+import { TYPE_TO_VALUE_MAP } from "./utils/typeToValueMap.mjs";
+
+Object.defineProperty(TYPE_TO_VALUE_MAP, "sisi", {
+  enumerable: true,
+  get() {
+    return "prout";
+  },
+});
 
 /**
  * @param {Array} entry
@@ -18,14 +25,6 @@ const transformComponentSpecs = (entry) => {
   const fake_props_variant = props_as_array.reduce(reduceToFakePropsList, [
     makeFakePropsObject(props_as_array),
   ]);
-
-  console.log(
-    chalk.greenBright(
-      "fake values props for " +
-        chalk.green.bold.underline(`<${component_name}/>`) +
-        chalk.greenBright(" created!")
-    )
-  );
 
   return [component_name, { fake_props_variant }];
 };
@@ -57,7 +56,7 @@ const makeFakePropsObject = (array) => {
  * @returns {Array}
  */
 const mapPropTypeToFakeValue = ([prop_name, type]) => {
-  return [prop_name.replace("?", ""), PROP_TYPES_MAP[type]];
+  return [prop_name.replace("?", ""), TYPE_TO_VALUE_MAP[type]];
 };
 
 (async () => {
@@ -85,16 +84,26 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => {
       JSON.stringify(components_render_specs, null, 2)
     ),
   ])
-    .then(() =>
+    .then(() => {
       console.log(
-        chalk.green(
+        c.greenBright(
+          c.green.bold(
+            components_specs
+              .map(({ component_name }) => `<${component_name}/>`)
+              .join("\n")
+          )
+        )
+      );
+
+      console.log(
+        c.green.underline(
           `components exports and render specs created in ${(
             performance.now() - t1
           )
             .toString()
             .slice(0, 4)}ms`
         )
-      )
-    )
+      );
+    })
     .catch(() => process.exit(1));
 })();
