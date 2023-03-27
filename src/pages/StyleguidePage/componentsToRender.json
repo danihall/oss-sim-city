@@ -15,5 +15,24 @@
         "children": "Text that can be contained in a HTMLElement"
       }
     ]
+  },
+  "ToolInput": {
+    "fake_props_variant": [
+      {
+        "id": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+        "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+        "img_path": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter."
+      }
+    ]
+  },
+  "Toolbar": {
+    "fake_props_variant": [
+      {}
+    ]
+  },
+  "ToolbarDropdown": {
+    "fake_props_variant": [
+      {}
+    ]
   }
 }

@@ -4,7 +4,7 @@ import process from "node:process";
 import chalk from "chalk";
 
 import { createExportStatement } from "./utils/exportTemplate.mjs";
-import { getFileContent } from "./utils/helpers.mjs";
+import { getComponentSpecs } from "./utils/helpers.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 import { PROP_TYPES_MAP } from "./utils/propTypesMap.mjs";
 
@@ -22,7 +22,7 @@ const transformComponentSpecs = (entry) => {
   console.log(
     chalk.greenBright(
       "fake values props for " +
-        chalk.green.bold(`<${component_name}/>`) +
+        chalk.green.bold.underline(`<${component_name}/>`) +
         chalk.greenBright(" created!")
     )
   );
@@ -48,31 +48,31 @@ const reduceToFakePropsList = (acc, cur, _index, array) => {
  * @param {Array} array
  * @returns {Object}
  */
-const makeFakePropsObject = (array) =>
-  Object.fromEntries(array.map(mapPropTypeToFakeValue));
+const makeFakePropsObject = (array) => {
+  return Object.fromEntries(array.map(mapPropTypeToFakeValue));
+};
 
 /**
  * @param {Array}
  * @returns {Array}
  */
-const mapPropTypeToFakeValue = ([prop_name, type]) => [
-  prop_name.replace("?", ""),
-  PROP_TYPES_MAP[type],
-];
+const mapPropTypeToFakeValue = ([prop_name, type]) => {
+  return [prop_name.replace("?", ""), PROP_TYPES_MAP[type]];
+};
 
 (async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
-  const component_specs = await Promise.all(
-    component_folders.map(getFileContent)
-  );
+  const components_specs = await Promise.all(
+    component_folders.map(getComponentSpecs)
+  ).then((result) => result.flat());
 
-  const components_export_statements = component_specs
-    .map((component) => createExportStatement(component))
+  const components_export_statements = components_specs
+    .map(createExportStatement)
     .join("");
 
   const components_render_specs = Object.fromEntries(
-    Object.entries({ ...component_specs }).map(transformComponentSpecs)
+    Object.entries({ ...components_specs }).map(transformComponentSpecs)
   );
 
   Promise.all([
@@ -96,5 +96,5 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => [
         )
       )
     )
-    .catch((reason) => (console.error(reason), process.exit(1)));
+    .catch(() => process.exit(1));
 })();
