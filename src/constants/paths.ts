@@ -1,4 +1,4 @@
-const PATHS = {
+const NAV_PATHS = {
   "/": "home",
   start: "start a new city",
   load: "load a city",
@@ -6,4 +6,6 @@ const PATHS = {
   styleguide: "view the styleguide",
 };
 
-export { PATHS };
+const TOOLBAR_IMG_PATH = "/assets/toolbar-images";
+
+export { NAV_PATHS, TOOLBAR_IMG_PATH };

@@ -1,0 +1,20 @@
+.toolbar {
+    display: grid;
+
+    &-dropdown-button {
+        //
+    }
+
+    &-tool-input {
+        display: block;
+        font-size: 0;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        overflow: hidden;
+
+        &>img {
+            object-fit: cover;
+        }
+    }
+}

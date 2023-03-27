@@ -9,12 +9,13 @@ const DayNightToggler = () => {
 
   return (
     <button
+      type="button"
       className={css["button-day-night"]}
       onClick={handleClick}
       aria-pressed={is_pressed}
     >
       toggle between day and night
-      <svg aria-hidden="true"></svg>
+      <svg aria-hidden="true" focusable="false"></svg>
     </button>
   );
 };

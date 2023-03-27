@@ -1,0 +1,68 @@
+[
+    {
+        "id": "r",
+        "text": "zone residential area",
+        "img_path": "/tool-residential.png",
+        "children_inputs": [
+            {
+                "id": "r-1",
+                "text": "residential light density",
+                "img_path": "/tool-residential.png"
+            },
+            {
+                "id": "r-2",
+                "text": "residential medium density",
+                "img_path": "/tool-residential.png"
+            },
+            {
+                "id": "r-3",
+                "text": "residential high density",
+                "img_path": "/tool-residential.png"
+            }
+        ]
+    },
+    {
+        "id": "c",
+        "text": "zone commercial area",
+        "img_path": "/tool-commercial.png",
+        "children_inputs": [
+            {
+                "id": "c-1",
+                "text": "commercial light density",
+                "img_path": "/tool-commercial.png"
+            },
+            {
+                "id": "c-2",
+                "text": "commercial medium density",
+                "img_path": "/tool-commercial.png"
+            },
+            {
+                "id": "c-3",
+                "text": "commercial high density",
+                "img_path": "/tool-commercial.png"
+            }
+        ]
+    },
+    {
+        "id": "i",
+        "text": "zone industrial area",
+        "img_path": "/tool-industrial.png",
+        "children_inputs": [
+            {
+                "id": "i-1",
+                "text": "industrial light density",
+                "img_path": "/tool-industrial.png"
+            },
+            {
+                "id": "i-2",
+                "text": "industrial medium density",
+                "img_path": "/tool-industrial.png"
+            },
+            {
+                "id": "i-3",
+                "text": "industrial high density",
+                "img_path": "/tool-industrial.png"
+            }
+        ]
+    }
+]
