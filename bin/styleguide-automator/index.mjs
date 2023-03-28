@@ -6,33 +6,7 @@ import c from "chalk";
 import { createExportStatement } from "./utils/exportTemplate.mjs";
 import { getComponentSpecs } from "./utils/getComponentSpecs.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
-import { TYPE_TO_VALUE_MAP } from "./utils/typeToValueMap.mjs";
-
-/*
-const test = {
-  a: "a",
-  b: "b",
-  c: "c",
-  aa: "aa",
-};
-
-console.log(test.a);
-const tutu = Object.defineProperties(test, {
-  a: {
-    enumerable: true,
-    get() {
-      const self = this;
-      return {
-        get lol() {
-          return self.aa;
-        },
-      };
-    },
-  },
-});
-
-console.log(tutu.a.lol);
-*/
+import { SOURCE_OF_TRUTH } from "./utils/sourceOfTruth.mjs";
 
 /**
  * @param {Array} entry
@@ -75,7 +49,7 @@ const makeFakePropsObject = (array) => {
  * @returns {Array}
  */
 const mapPropTypeToFakeValue = ([prop_name, type]) => {
-  return [prop_name, TYPE_TO_VALUE_MAP[type]];
+  return [prop_name, SOURCE_OF_TRUTH[type]];
 };
 
 (async () => {
@@ -83,12 +57,15 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => {
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
   const components_specs = await Promise.all(
     component_folders.map(getComponentSpecs)
-  ).then((result) => result.flat());
+  );
+
+  console.log(components_specs);
 
   const components_export_statements = components_specs
     .map(createExportStatement)
     .join("");
 
+  /*
   const components_render_specs = Object.fromEntries(
     Object.entries({ ...components_specs }).map(transformComponentSpecs)
   );
@@ -125,4 +102,5 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => {
       );
     })
     .catch(() => process.exit(1));
+    */
 })();

@@ -5,8 +5,9 @@ import {
   COMPONENTS_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
 } from "./paths.mjs";
-import { TYPE_TO_VALUE_MAP } from "./typeToValueMap.mjs";
+import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
+const SOURCE_OF_TRUTH_keys = Object.keys(SOURCE_OF_TRUTH);
 const REGEX_INTERFACE = /(?<=interface\s)([A-Za-z]|\s(?!{))+/;
 
 /**
@@ -48,7 +49,7 @@ const _makeComponentAndPropsDataObject = (
     interface_extended_from: null,
     props: {},
   };
-  const _props = [];
+  //const _props = [];
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_name = content_as_array[i]
@@ -61,7 +62,13 @@ const _makeComponentAndPropsDataObject = (
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] !== "}") {
-          _props.push(content_as_array[j]);
+          //_props.push(content_as_array[j]);
+          let [key, value] = content_as_array[j].split(":");
+
+          key = key.replace("?", "").trim();
+          value = value.replace(";", "").trim();
+
+          component_and_props.props[key] = value;
         } else {
           break parent_loop;
         }
@@ -69,23 +76,11 @@ const _makeComponentAndPropsDataObject = (
     }
   }
 
-  //const test = _props.reduce(_makePropsObject, {});
-  //console.log(Object.entries(test));
   /*
-  Object.defineProperty(TYPE_TO_VALUE_MAP, component_and_props.interface_name, {
-    enumerable: true,
-    get() {
-      const self = this;
-      return {
-        get []
-      }
-    },
-  });
-  */
-
   if (_props.length) {
     component_and_props.props = _props.reduce(_makePropsObject, {});
   }
+  */
 
   return component_and_props;
 };
@@ -95,7 +90,7 @@ const _makeComponentAndPropsDataObject = (
  * @this {object} component_folder
  * @returns {Promise}
  */
-const _getFileContent = async function (file) {
+const _updateSourceOfTruth = async function (file) {
   const content = await fs.promises.readFile(file, "utf-8");
   const content_as_array = content.split("\n");
 
@@ -120,7 +115,7 @@ const getComponentSpecs = async (component_folder) => {
     .map((tsx_file) => `${COMPONENTS_PATH}/${component_folder}/${tsx_file}`);
 
   return Promise.all(
-    effective_files.map(_getFileContent, { component_folder })
+    effective_files.map(_updateSourceOfTruth, { component_folder })
   );
 };
 
