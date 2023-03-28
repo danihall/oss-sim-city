@@ -4,16 +4,35 @@ import process from "node:process";
 import c from "chalk";
 
 import { createExportStatement } from "./utils/exportTemplate.mjs";
-import { getComponentSpecs } from "./utils/helpers.mjs";
+import { getComponentSpecs } from "./utils/getComponentSpecs.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 import { TYPE_TO_VALUE_MAP } from "./utils/typeToValueMap.mjs";
 
-Object.defineProperty(TYPE_TO_VALUE_MAP, "sisi", {
-  enumerable: true,
-  get() {
-    return "prout";
+/*
+const test = {
+  a: "a",
+  b: "b",
+  c: "c",
+  aa: "aa",
+};
+
+console.log(test.a);
+const tutu = Object.defineProperties(test, {
+  a: {
+    enumerable: true,
+    get() {
+      const self = this;
+      return {
+        get lol() {
+          return self.aa;
+        },
+      };
+    },
   },
 });
+
+console.log(tutu.a.lol);
+*/
 
 /**
  * @param {Array} entry
@@ -56,7 +75,7 @@ const makeFakePropsObject = (array) => {
  * @returns {Array}
  */
 const mapPropTypeToFakeValue = ([prop_name, type]) => {
-  return [prop_name.replace("?", ""), TYPE_TO_VALUE_MAP[type]];
+  return [prop_name, TYPE_TO_VALUE_MAP[type]];
 };
 
 (async () => {

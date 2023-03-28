@@ -5,8 +5,9 @@ import {
   COMPONENTS_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
 } from "./paths.mjs";
+import { TYPE_TO_VALUE_MAP } from "./typeToValueMap.mjs";
 
-const REGEX_INTERFACE = /(?<=interface\s+)[^\s]+/;
+const REGEX_INTERFACE = /(?<=interface\s)([A-Za-z]|\s(?!{))+/;
 
 /**
  * @param {object} acc
@@ -17,7 +18,10 @@ const _makePropsObject = (acc, cur) => {
   const [key, value] = cur.split(":");
   const sanitized_key = key.replace("?", "").trim();
   const sanitized_value = value.replace(";", "").trim();
-  console.log(sanitized_key, sanitized_value);
+
+  if (Array.isArray(acc)) {
+    return [...acc, [sanitized_key, sanitized_value]];
+  }
 
   return {
     ...acc,
@@ -40,16 +44,20 @@ const _makeComponentAndPropsDataObject = (
   const component_and_props = {
     component_name: name,
     path: `${PATH_FROM_STYLEGUIDE_TO_COMPONENTS}/${component_folder}/${name}`,
-    interface_name: "",
+    interface_name: null,
+    interface_extended_from: null,
     props: {},
   };
   const _props = [];
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
-    const interface_name = content_as_array[i].match(REGEX_INTERFACE)?.[0];
+    const interface_name = content_as_array[i]
+      .match(REGEX_INTERFACE)?.[0]
+      .split(" extends ");
 
     if (interface_name) {
-      component_and_props.interface_name = interface_name;
+      component_and_props.interface_name = interface_name[0];
+      component_and_props.interface_extended_from = interface_name[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] !== "}") {
@@ -60,6 +68,20 @@ const _makeComponentAndPropsDataObject = (
       }
     }
   }
+
+  //const test = _props.reduce(_makePropsObject, {});
+  //console.log(Object.entries(test));
+  /*
+  Object.defineProperty(TYPE_TO_VALUE_MAP, component_and_props.interface_name, {
+    enumerable: true,
+    get() {
+      const self = this;
+      return {
+        get []
+      }
+    },
+  });
+  */
 
   if (_props.length) {
     component_and_props.props = _props.reduce(_makePropsObject, {});
