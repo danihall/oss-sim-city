@@ -1,78 +1,143 @@
 import fs from "node:fs";
+import path from "node:path";
 import process from "node:process";
 
 import c from "chalk";
 
 import { createExportStatement } from "./utils/exportTemplate.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
-import { setComponentSpecs } from "./utils/setComponentSpecs.mjs";
-import { SOURCE_OF_TRUTH } from "./utils/sourceOfTruth.mjs";
+import {
+  SOURCE_OF_TRUTH,
+  REGEX_IS_TEXT,
+  REGEX_IS_PATH,
+} from "./utils/sourceOfTruth.mjs";
+
+const REGEX_INTERFACE = /(?<=interface\s)[^\s]+/;
 
 /**
- * @param {Array} entry
- * @returns {Array}
+ * @param {string} key
+ * @param {string} value
+ * @returns {string}
  */
-const transformComponentSpecs = (entry) => {
-  const [, { component_name, props }] = entry;
-  const props_as_array = Object.entries(props);
-  const fake_props_variant = props_as_array.reduce(reduceToFakePropsList, [
-    makeFakePropsObject(props_as_array),
-  ]);
-
-  return [component_name, { fake_props_variant }];
-};
-
-/**
- * @param {Array} acc
- * @param {Array} cur
- * @param {Array} array
- * @returns {Array}
- */
-const reduceToFakePropsList = (acc, cur, _index, array) => {
-  const [key, value] = cur;
-  if (value === "boolean") {
-    return [...acc, { ...makeFakePropsObject(array), [key]: !value }];
+const _getEffectiveSuffix = (key, value) => {
+  switch (value) {
+    case "string": {
+      if (REGEX_IS_PATH.test(key)) {
+        return "_path";
+      }
+      if (REGEX_IS_TEXT.test(key)) {
+        return "_text";
+      }
+      return "_attr";
+    }
+    default:
+      return "";
   }
-  return acc;
 };
 
 /**
- * @param {Array} array
- * @returns {Object}
+ * @param {array} content_entry
+ * @returns {array}
  */
-const makeFakePropsObject = (array) => {
-  return Object.fromEntries(array.map(mapPropTypeToFakeValue));
+const _mapToSourceOfTruthContext = function (content_entry) {
+  let [key, value] = content_entry;
+  const is_array_of_values = value.slice(-2) === "[]";
+  value += _getEffectiveSuffix(key, value);
+
+  if (is_array_of_values) {
+    value = value.slice(0, -2);
+    return [key, [this[value](), this[value](), this[value]()]];
+  }
+
+  return [key, this[value]()];
 };
 
 /**
- * @param {Array}
- * @returns {Array}
+ * @param {string} file
+ * @returns {Promise}
  */
-const mapPropTypeToFakeValue = ([prop_name, type]) => {
-  return [prop_name, SOURCE_OF_TRUTH[type]];
+const _updateSourceOfTruth = async (file) => {
+  const content = await fs.promises.readFile(file, "utf-8");
+  const content_as_array = content.split("\n");
+
+  const component_name = file.split("/").pop().replace(".tsx", "");
+  const path = file.replace(".tsx", "");
+  const _props = [];
+  let interface_name = null;
+
+  parent_loop: for (let i = 0; i < content_as_array.length; i++) {
+    interface_name = content_as_array[i].match(REGEX_INTERFACE)?.[0];
+
+    if (interface_name) {
+      for (let j = i + 1; j < content_as_array.length; j++) {
+        if (content_as_array[j] !== "}") {
+          let [key, value] = content_as_array[j].split(":");
+
+          _props.push([
+            key.replace("?", "").trim(),
+            value.replace(";", "").trim(),
+          ]);
+        } else {
+          break parent_loop;
+        }
+      }
+    }
+  }
+
+  if (interface_name && _props.length) {
+    Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
+      enumerable: true,
+      value: function () {
+        return Object.fromEntries(_props.map(_mapToSourceOfTruthContext, this));
+      },
+    });
+  }
+
+  Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
+    enumerable: true,
+    get() {
+      const _self = this; //eslint-disable-line
+      return {
+        path,
+        get props() {
+          return _self[interface_name]?.();
+        },
+      };
+    },
+  });
+
+  return { component_name, path };
 };
 
+/**
+ * @param {string} component_folder
+ * @returns {Promise}
+ */
+const _setComponentSpecs = async (component_folder) => {
+  const files = await fs.promises.readdir(
+    `${COMPONENTS_PATH}/${component_folder}`
+  );
+
+  const component_files = files
+    .filter((file) => path.extname(file) === ".tsx")
+    .map((tsx_file) => `${COMPONENTS_PATH}/${component_folder}/${tsx_file}`);
+
+  return Promise.all(component_files.map(_updateSourceOfTruth));
+};
+
+/**
+ * main function @see package.json
+ */
 (async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
   const components_name_and_path = await Promise.all(
-    component_folders.map(setComponentSpecs)
-  );
-
-  console.log(components_name_and_path);
-  //console.log(SOURCE_OF_TRUTH);
+    component_folders.map(_setComponentSpecs)
+  ).then((result) => result.flat());
 
   const components_export_statements = components_name_and_path
-    .flat()
     .map(createExportStatement)
     .join("");
-
-  console.log(components_export_statements);
-
-  /*
-  const components_render_specs = Object.fromEntries(
-    Object.entries({ ...components_name_and_path }).map(transformComponentSpecs)
-  );
 
   Promise.all([
     fs.promises.writeFile(
@@ -81,30 +146,29 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => {
     ),
     fs.promises.writeFile(
       `${STYLEGUIDE_PATH}/componentsToRender.json`,
-      JSON.stringify(components_render_specs, null, 2)
+      JSON.stringify(SOURCE_OF_TRUTH, null, 2)
     ),
   ])
     .then(() => {
       console.log(
-        c.greenBright(
-          c.green.bold(
-            components_name_and_path
-              .map(({ component_name }) => `<${component_name}/>`)
-              .join("\n")
-          )
-        )
-      );
-
-      console.log(
-        c.green.underline(
-          `components exports and render specs created in ${(
+        c.blueBright.bold(
+          `  components exports and render specs created in ${(
             performance.now() - t1
           )
             .toString()
-            .slice(0, 4)}ms`
+            .slice(0, 4)}ms:`
+        )
+      );
+      console.log(
+        c.blueBright(
+          components_name_and_path
+            .map(({ component_name }) => `    <${component_name}/>`)
+            .join("\n")
         )
       );
     })
-    .catch(() => process.exit(1));
-    */
+    .catch((reason) => {
+      console.log(c.red(reason));
+      process.exit(1);
+    });
 })();

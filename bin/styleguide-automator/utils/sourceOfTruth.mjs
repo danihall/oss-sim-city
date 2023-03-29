@@ -1,23 +1,29 @@
 const REGEX_IS_TEXT = /text|content/;
 const REGEX_IS_PATH = /path|url/;
 
+/**
+ * This object will be mutated, gradually receiving new keys as getters.
+ * The added getters will use the function defined below to create fake values for the styleguide.
+ * When JSON.stringify is used, it deletes all plain functions, and executes getters.
+ * So once stringified, this object will serve as data to populate each component with the correct props.
+ */
 const SOURCE_OF_TRUTH = {
-  get boolean() {
+  boolean() {
     return true;
   },
-  get number() {
+  number() {
     return +performance.now().toString().slice(-5);
   },
-  get string_text() {
+  string_text() {
     return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.";
   },
-  get string_attr() {
-    return `attr-${this.number}`;
+  string_attr() {
+    return `attr-${this.number()}`;
   },
-  get string_path() {
+  string_path() {
     return "https://placehold.co/600x400/png";
   },
-  get "React.ReactNode"() {
+  "React.ReactNode"() {
     return "Text that can be contained in a HTMLElement";
   },
 };

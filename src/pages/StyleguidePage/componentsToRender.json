@@ -1,32 +1,47 @@
 {
-  "DayNightToggler": {
-    "fake_props_variant": [
-      {}
-    ]
-  },
   "Nav": {
-    "fake_props_variant": [
-      {}
-    ]
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Nav/Nav"
   },
-  "TextBlock": {
-    "fake_props_variant": [
-      {}
-    ]
+  "DayNightToggler": {
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/DayNightToggler/DayNightToggler"
   },
   "ToolInput": {
-    "fake_props_variant": [
-      {}
-    ]
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/ToolInput",
+    "props": {
+      "id": "attr-29732",
+      "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+      "img_path": "https://placehold.co/600x400/png"
+    }
   },
-  "Toolbar": {
-    "fake_props_variant": [
-      {}
-    ]
+  "TextBlock": {
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/TextBlock/TextBlock",
+    "props": {
+      "children": "Text that can be contained in a HTMLElement"
+    }
   },
   "ToolbarDropdown": {
-    "fake_props_variant": [
-      {}
-    ]
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/ToolbarDropdown",
+    "props": {
+      "children_inputs": [
+        {
+          "id": "attr-57486",
+          "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+          "img_path": "https://placehold.co/600x400/png"
+        },
+        {
+          "id": "attr-60634",
+          "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+          "img_path": "https://placehold.co/600x400/png"
+        },
+        {
+          "id": "attr-57449",
+          "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+          "img_path": "https://placehold.co/600x400/png"
+        }
+      ]
+    }
+  },
+  "Toolbar": {
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/Toolbar"
   }
 }
