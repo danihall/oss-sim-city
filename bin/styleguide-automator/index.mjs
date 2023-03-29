@@ -4,8 +4,8 @@ import process from "node:process";
 import c from "chalk";
 
 import { createExportStatement } from "./utils/exportTemplate.mjs";
-import { getComponentSpecs } from "./utils/getComponentSpecs.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
+import { setComponentSpecs } from "./utils/setComponentSpecs.mjs";
 import { SOURCE_OF_TRUTH } from "./utils/sourceOfTruth.mjs";
 
 /**
@@ -55,19 +55,23 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => {
 (async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
-  const components_specs = await Promise.all(
-    component_folders.map(getComponentSpecs)
+  const components_name_and_path = await Promise.all(
+    component_folders.map(setComponentSpecs)
   );
 
-  console.log(components_specs);
+  console.log(components_name_and_path);
+  //console.log(SOURCE_OF_TRUTH);
 
-  const components_export_statements = components_specs
+  const components_export_statements = components_name_and_path
+    .flat()
     .map(createExportStatement)
     .join("");
 
+  console.log(components_export_statements);
+
   /*
   const components_render_specs = Object.fromEntries(
-    Object.entries({ ...components_specs }).map(transformComponentSpecs)
+    Object.entries({ ...components_name_and_path }).map(transformComponentSpecs)
   );
 
   Promise.all([
@@ -84,7 +88,7 @@ const mapPropTypeToFakeValue = ([prop_name, type]) => {
       console.log(
         c.greenBright(
           c.green.bold(
-            components_specs
+            components_name_and_path
               .map(({ component_name }) => `<${component_name}/>`)
               .join("\n")
           )

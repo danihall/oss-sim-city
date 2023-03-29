@@ -1,3 +1,8 @@
+import {
+  COMPONENTS_PATH,
+  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
+} from "./paths.mjs";
+
 /**
  * @param {TemplateStringsArray} static_chunks
  * @param  {Array} rest
@@ -19,6 +24,9 @@ const _template = (static_chunks, ...rest) => {
  * @returns {string}
  */
 const createExportStatement = ({ component_name, path }) =>
-  _template`export {${component_name}} from "${path}";`;
+  _template`export {${component_name}} from "${path.replace(
+    COMPONENTS_PATH,
+    PATH_FROM_STYLEGUIDE_TO_COMPONENTS
+  )}";`;
 
 export { createExportStatement };
