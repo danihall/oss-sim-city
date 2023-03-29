@@ -4,13 +4,13 @@ import process from "node:process";
 
 import c from "chalk";
 
-import { createExportStatement } from "./utils/exportTemplate.mjs";
-import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 import {
   SOURCE_OF_TRUTH,
   REGEX_IS_TEXT,
   REGEX_IS_PATH,
-} from "./utils/sourceOfTruth.mjs";
+} from "./sourceOfTruth.mjs";
+import { createExportStatement } from "./utils/exportTemplate.mjs";
+import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)[^\s]+/;
 
@@ -127,9 +127,9 @@ const _setComponentSpecs = async (component_folder) => {
 };
 
 /**
- * main function @see package.json
+ * @see package.json
  */
-(async () => {
+const main = async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
   const components_name_and_path = await Promise.all(
@@ -172,4 +172,6 @@ const _setComponentSpecs = async (component_folder) => {
       console.log(c.red(reason));
       process.exit(1);
     });
-})();
+};
+
+export { main };

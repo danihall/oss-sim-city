@@ -24,7 +24,7 @@
   "scripts": {
     "dev": "react-scripts start",
     "build": "react-scripts build",
-    "styleguide": "node bin/styleguide-automator/index.mjs",
+    "styleguide": "node -e 'import(\"./bin/styleguide-automator/index.mjs\").then(m=>m.main())'",
     "test": "react-scripts test",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",

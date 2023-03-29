@@ -1,17 +1,9 @@
 {
-  "Nav": {
-    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Nav/Nav"
-  },
   "DayNightToggler": {
     "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/DayNightToggler/DayNightToggler"
   },
-  "ToolInput": {
-    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/ToolInput",
-    "props": {
-      "id": "attr-29732",
-      "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-      "img_path": "https://placehold.co/600x400/png"
-    }
+  "Nav": {
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Nav/Nav"
   },
   "TextBlock": {
     "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/TextBlock/TextBlock",
@@ -19,29 +11,41 @@
       "children": "Text that can be contained in a HTMLElement"
     }
   },
+  "Toolbar": {
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/Toolbar"
+  },
+  "ToolInput": {
+    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/ToolInput",
+    "props": {
+      "id": "attr-72424",
+      "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
+      "img_path": "https://placehold.co/600x400/png",
+      "is_true": true
+    }
+  },
   "ToolbarDropdown": {
     "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/ToolbarDropdown",
     "props": {
       "children_inputs": [
         {
-          "id": "attr-57486",
+          "id": "attr-42496",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-          "img_path": "https://placehold.co/600x400/png"
+          "img_path": "https://placehold.co/600x400/png",
+          "is_true": true
         },
         {
-          "id": "attr-60634",
+          "id": "attr-70627",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-          "img_path": "https://placehold.co/600x400/png"
+          "img_path": "https://placehold.co/600x400/png",
+          "is_true": true
         },
         {
-          "id": "attr-57449",
+          "id": "attr-9256",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
-          "img_path": "https://placehold.co/600x400/png"
+          "img_path": "https://placehold.co/600x400/png",
+          "is_true": true
         }
       ]
     }
-  },
-  "Toolbar": {
-    "path": "/Users/danielhalle/Desktop/oss-sim-city/src/components/Toolbar/Toolbar"
   }
 }
