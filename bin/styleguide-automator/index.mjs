@@ -15,6 +15,7 @@ import {
 const REGEX_INTERFACE = /(?<=interface\s)[^\s]+/;
 
 /**
+ * @see /utils/sourceOfTruth.mjs
  * @param {string} key
  * @param {string} value
  * @returns {string}
@@ -146,7 +147,7 @@ const _setComponentSpecs = async (component_folder) => {
     ),
     fs.promises.writeFile(
       `${STYLEGUIDE_PATH}/componentsToRender.json`,
-      JSON.stringify(SOURCE_OF_TRUTH, null, 2)
+      JSON.stringify(SOURCE_OF_TRUTH, null, 2) // Maybe use a reviver to generate fake_props_variants?
     ),
   ])
     .then(() => {
