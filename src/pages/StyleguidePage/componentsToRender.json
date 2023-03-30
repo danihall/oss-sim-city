@@ -1,43 +1,37 @@
 {
-  "DayNightToggler": {
-    "props": {}
-  },
-  "Nav": {
-    "props": {}
-  },
+  "DayNightToggler": {},
   "TextBlock": {
     "props": {
       "children": "Text that can be contained in a HTMLElement"
     }
   },
+  "Nav": {},
+  "Toolbar": {},
   "ToolInput": {
     "props": {
-      "id": "attr-74121",
+      "id": "attr-65683",
       "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
       "img_path": "https://placehold.co/600x400/png"
     }
   },
-  "Toolbar": {
-    "props": {}
-  },
   "ToolbarDropdown": {
     "props": {
-      "id": "attr-10985",
+      "id": "attr-69934",
       "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
       "img_path": "https://placehold.co/600x400/png",
       "children_inputs": [
         {
-          "id": "attr-19796",
+          "id": "attr-26767",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
           "img_path": "https://placehold.co/600x400/png"
         },
         {
-          "id": "attr-91643",
+          "id": "attr-55725",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
           "img_path": "https://placehold.co/600x400/png"
         },
         {
-          "id": "attr-1509",
+          "id": "attr-82065",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.",
           "img_path": "https://placehold.co/600x400/png"
         }

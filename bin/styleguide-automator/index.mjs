@@ -4,11 +4,7 @@ import process from "node:process";
 
 import c from "chalk";
 
-import {
-  SOURCE_OF_TRUTH,
-  REGEX_IS_TEXT,
-  REGEX_IS_PATH,
-} from "./sourceOfTruth.mjs";
+import { SOURCE_OF_TRUTH, REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 import { createExportStatement } from "./utils/exportTemplate.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 
@@ -17,49 +13,58 @@ const EXTENDS = " extends ";
 const TSX = ".tsx";
 
 /**
+ * @param {string} key
+ * @this {object}
+ * @returns {boolean}
+ */
+const _isTruthyValue = function (key) {
+  return Boolean(this[key]);
+};
+
+/**
  * @see /utils/sourceOfTruth.mjs
  * @param {string} key
- * @param {string} value
+ * @param {string} type
  * @returns {string}
  */
-const _getEffectiveSuffix = (key, value) => {
-  switch (value) {
+const _makeFakeType = (prop_key, prop_type) => {
+  switch (prop_type) {
     case "string": {
-      if (REGEX_IS_PATH.test(key)) {
-        return "_path";
-      }
-      if (REGEX_IS_TEXT.test(key)) {
-        return "_text";
-      }
-      return "_attr";
+      const matched_keys = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups || {};
+      const suffix = Object.keys(matched_keys).find(
+        _isTruthyValue,
+        matched_keys
+      );
+
+      return `${prop_type}${suffix || "_attr"}`;
     }
     default:
-      return "";
+      return prop_type;
   }
 };
 
 /**
+ * It's here that fake props value are given, derived from their type ("string", "number", a custom Interface, etc).
  * @param {array} content_entry
+ * @this {object} SOURCE_OF_TRUTH
  * @returns {array}
  */
 const _mapToSourceOfTruthContext = function (content_entry) {
-  let [key, value] = content_entry;
-  const is_array_of_values = value.slice(-2) === "[]";
-  value += _getEffectiveSuffix(key, value);
+  let [prop_key, prop_type] = content_entry;
+  const fake_type = _makeFakeType(prop_key, prop_type);
+  const is_array_of_types = fake_type.slice(-2) === "[]";
+  const fake_value = is_array_of_types
+    ? Array.from({ length: 3 }, () => this[fake_type.slice(0, -2)]())
+    : this[fake_type]();
 
-  if (is_array_of_values) {
-    value = value.slice(0, -2);
-    return [key, [this[value](), this[value](), this[value]()]];
-  }
-
-  return [key, this[value]()];
+  return [prop_key, fake_value];
 };
 
 /**
  * Some "meta-programming" is done when using Object.defineProperty().
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions will then be discarded.
- * This is ideal since this gives a json file with values created dynamically.
+ * This is ideal since this will output a json file with values that have been created dynamically at "stringify time".
  * @param {string} file
  * @returns {Promise}
  */
@@ -84,11 +89,11 @@ const _updateSourceOfTruth = async (file) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] !== "}") {
-          let [key, value] = content_as_array[j].split(":");
+          let [prop_key, prop_type] = content_as_array[j].split(":");
 
           props_list.push([
-            key.replace("?", "").trim(),
-            value.replace(";", "").trim(),
+            prop_key.replace("?", "").trim(),
+            prop_type.replace(";", "").trim(),
           ]);
         } else {
           break parent_loop;
@@ -101,9 +106,11 @@ const _updateSourceOfTruth = async (file) => {
     Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
       enumerable: true,
       value: function () {
-        return Object.fromEntries(
+        const _props_from_extend = this[extended_interface]?.();
+        const _props = Object.fromEntries(
           props_list.map(_mapToSourceOfTruthContext, this)
         );
+        return { ..._props_from_extend, ..._props };
       },
     });
   }
@@ -114,9 +121,7 @@ const _updateSourceOfTruth = async (file) => {
       const _self = this; //eslint-disable-line
       return {
         get props() {
-          const extended_props = _self[extended_interface]?.() ?? {};
-          const props = _self[interface_name]?.();
-          return { ...extended_props, ...props };
+          return _self[interface_name]?.();
         },
       };
     },

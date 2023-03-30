@@ -1,5 +1,5 @@
-const REGEX_IS_TEXT = /text|content/;
-const REGEX_IS_PATH = /path|url/;
+const REGEX_STRING_FLAVOUR =
+  /(?<_text>text|content)|(?<_path>path|url)|(?<_date>date)/i;
 
 /**
  * This object will be mutated, gradually receiving new keys as getters.
@@ -14,18 +14,25 @@ const SOURCE_OF_TRUTH = {
   number() {
     return +performance.now().toString().slice(-5);
   },
-  string_text() {
-    return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.";
-  },
   string_attr() {
     return `attr-${this.number()}`;
   },
+  string_date() {
+    return Intl.DateTimeFormat("fr", {
+      dateStyle: "full",
+      timeStyle: "short",
+      timeZone: "Europe/Paris",
+    }).format(Date.now());
+  },
   string_path() {
     return "https://placehold.co/600x400/png";
+  },
+  string_text() {
+    return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.";
   },
   "React.ReactNode"() {
     return "Text that can be contained in a HTMLElement";
   },
 };
 
-export { SOURCE_OF_TRUTH, REGEX_IS_TEXT, REGEX_IS_PATH };
+export { SOURCE_OF_TRUTH, REGEX_STRING_FLAVOUR };
