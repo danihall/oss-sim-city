@@ -10,7 +10,9 @@ import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./utils/paths.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const EXTENDS = " extends ";
+const INTERFACE_END = "}";
 const TSX = ".tsx";
+const ATTR_SUFFIX = "_attr";
 
 /**
  * @param {string} key
@@ -36,7 +38,7 @@ const _makeFakeType = (prop_key, prop_type) => {
         matched_keys
       );
 
-      return `${prop_type}${suffix || "_attr"}`;
+      return `${prop_type}${suffix || ATTR_SUFFIX}`;
     }
     default:
       return prop_type;
@@ -44,15 +46,16 @@ const _makeFakeType = (prop_key, prop_type) => {
 };
 
 /**
- * It's here that fake props value are given, derived from their type ("string", "number", a custom Interface, etc).
- * @param {array} content_entry
+ * It's here that fake props value are set, derived from their type ("string", "number", a custom Interface, etc).
+ * @param {string} prop_key
+ * @param {string} prop_type
  * @this {object} SOURCE_OF_TRUTH
  * @returns {array}
  */
-const _mapToSourceOfTruthContext = function (content_entry) {
-  let [prop_key, prop_type] = content_entry;
+const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
   const fake_type = _makeFakeType(prop_key, prop_type);
   const is_array_of_types = fake_type.slice(-2) === "[]";
+
   const fake_value = is_array_of_types
     ? Array.from({ length: 3 }, () => this[fake_type.slice(0, -2)]())
     : this[fake_type]();
@@ -88,16 +91,16 @@ const _updateSourceOfTruth = async (file) => {
       extended_interface = interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
-        if (content_as_array[j] !== "}") {
-          let [prop_key, prop_type] = content_as_array[j].split(":");
-
-          props_list.push([
-            prop_key.replace("?", "").trim(),
-            prop_type.replace(";", "").trim(),
-          ]);
-        } else {
+        if (content_as_array[j] === INTERFACE_END) {
           break parent_loop;
         }
+
+        let [prop_key, prop_type] = content_as_array[j].split(":");
+
+        props_list.push([
+          prop_key.replace("?", "").trim(),
+          prop_type.replace(";", "").trim(),
+        ]);
       }
     }
   }
