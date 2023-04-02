@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import process from "node:process";
 
-import c from "chalk";
-
 import {
   createExportStatement,
-  makeComponentNameandPathObject,
+  getComponentNameAndPath,
   getSuffix,
+  printProcessSuccess,
+  printProcessError,
 } from "./helpers.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
@@ -14,9 +14,10 @@ import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const EXTENDS = " extends ";
 const INTERFACE_END = "}";
-
+const TYPE_ARRAY = "[]";
 const ATTR_SUFFIX = "_attr";
 const FUNCTION_SIGNATURE = "=>";
+
 let function_prop_detected = false;
 
 /**
@@ -37,7 +38,7 @@ const _makeFakeType = (prop_key, prop_type) => {
 };
 
 /**
- * It's here that fake props value are set, derived from their type ("string", "number", a custom Interface, etc).
+ * It's here that fake props value are set, derived from their documented type ("string", "number", a custom Interface, etc).
  * @param {string} prop_key
  * @param {string} prop_type
  * @this {object} SOURCE_OF_TRUTH
@@ -45,7 +46,7 @@ const _makeFakeType = (prop_key, prop_type) => {
  */
 const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
   const fake_type = _makeFakeType(prop_key, prop_type);
-  const is_array_of_types = fake_type.slice(-2) === "[]";
+  const is_array_of_types = fake_type.slice(-2) === TYPE_ARRAY;
 
   let fake_value = is_array_of_types
     ? Array.from({ length: 3 }, () => this[fake_type.slice(0, -2)]?.())
@@ -66,7 +67,8 @@ const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions will then be discarded.
  * This is ideal since this will output a json file with values that have been created dynamically at "stringify time".
- * @param {string} file
+ * @param {string} component_name
+ * @param {string} path
  */
 const _updateSourceOfTruth = async ({ component_name, path }) => {
   const content = await fs.promises.readFile(path, "utf-8"); // Could use createReadStream() and readLine(), but files are expected to be small.
@@ -126,27 +128,13 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 };
 
 /**
- * @param {string} component_folder
- * @returns {Promise} array
- */
-const _getComponentNameAndPath = async (component_folder) => {
-  const folder_path = `${COMPONENTS_PATH}/${component_folder}`;
-  const files = await fs.promises.readdir(folder_path);
-  const effective_files = files.reduce(makeComponentNameandPathObject, [
-    folder_path,
-  ]);
-
-  return effective_files.slice(1);
-};
-
-/**
  * @see package.json
  */
 const main = async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
   const components_name_and_path = await Promise.all(
-    component_folders.map(_getComponentNameAndPath)
+    component_folders.map(getComponentNameAndPath)
   ).then((result) => result.flat());
 
   const components_export_statements = components_name_and_path
@@ -154,45 +142,27 @@ const main = async () => {
     .join("");
 
   Promise.all(components_name_and_path.map(_updateSourceOfTruth))
-    .then(() =>
-      Promise.all([
+    .then(() => {
+      return Promise.all([
         fs.promises.writeFile(
           `${STYLEGUIDE_PATH}/index.ts`,
           components_export_statements
         ),
         fs.promises.writeFile(
           `${STYLEGUIDE_PATH}/componentsToRender.json`,
-          JSON.stringify(SOURCE_OF_TRUTH, null, 2) // Maybe use a reviver to generate fake_props_variants?
+          JSON.stringify(SOURCE_OF_TRUTH, null, 2)
         ),
-      ])
-    )
+      ]);
+    })
     .then(() => {
-      console.log(
-        c.blueBright.bold(
-          `  components exports and render specs created in ${(
-            performance.now() - t1
-          )
-            .toString()
-            .slice(0, 4)}ms:`
-        )
+      printProcessSuccess(
+        performance.now() - t1,
+        components_name_and_path,
+        function_prop_detected
       );
-      console.log(
-        c.blueBright(
-          components_name_and_path
-            .map(({ component_name }) => `    <${component_name}/>`)
-            .join("\n")
-        )
-      );
-      if (function_prop_detected) {
-        console.log(
-          c.yellow(
-            "  (prop.s declaring a Function were discarded,\n  Styleguide-automator cannot generate a fake value for these kind of props)"
-          )
-        );
-      }
     })
     .catch((reason) => {
-      console.log(c.red(reason));
+      printProcessError(reason);
       process.exit(1);
     });
 };

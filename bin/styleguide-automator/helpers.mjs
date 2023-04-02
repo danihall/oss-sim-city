@@ -1,4 +1,7 @@
+import fs from "node:fs";
 import path from "node:path";
+
+import c from "chalk";
 
 import {
   COMPONENTS_PATH,
@@ -39,7 +42,7 @@ const createExportStatement = ({ component_name, path }) => {
  * @param {string} file
  * @returns {boolean}
  */
-const makeComponentNameandPathObject = (acc, file) => {
+const _makeComponentNameandPathObject = (acc, file) => {
   if (path.extname(file) !== TSX) {
     return acc;
   }
@@ -50,6 +53,20 @@ const makeComponentNameandPathObject = (acc, file) => {
     ...acc,
     { component_name: file.replace(TSX, ""), path: `${folder_path}/${file}` },
   ];
+};
+
+/**
+ * @param {string} component_folder
+ * @returns {Promise} array
+ */
+const getComponentNameAndPath = async (component_folder) => {
+  const folder_path = `${COMPONENTS_PATH}/${component_folder}`;
+  const files = await fs.promises.readdir(folder_path);
+  const effective_files = files.reduce(_makeComponentNameandPathObject, [
+    folder_path,
+  ]);
+
+  return effective_files.slice(1);
 };
 
 /**
@@ -70,9 +87,46 @@ const getSuffix = (prop_key) => {
   return Object.keys(matched_keys).find(_isTruthyValue, matched_keys);
 };
 
+const printProcessSuccess = (
+  process_duration,
+  components_name_and_path,
+  function_prop_detected
+) => {
+  console.log(
+    c.blueBright.bold(
+      `  components exports and render specs created in ${process_duration
+        .toString()
+        .slice(0, 4)}ms:`
+    )
+  );
+  console.log(
+    c.blueBright(
+      components_name_and_path
+        .map(({ component_name }) => `    <${component_name}/>`)
+        .join("\n")
+    )
+  );
+  if (function_prop_detected) {
+    console.log(
+      c.yellow(
+        "  (prop.s declaring a Function were discarded,\n  Styleguide-automator cannot generate a fake value for these kind of props)"
+      )
+    );
+  }
+};
+
+const printProcessError = (reason) => {
+  console.log(
+    c.red(`  Styleguide-automator encountered an error:
+      ${reason}
+  Process exited.`)
+  );
+};
+
 export {
   createExportStatement,
-  makeComponentNameandPathObject,
-  TSX,
+  getComponentNameAndPath,
   getSuffix,
+  printProcessSuccess,
+  printProcessError,
 };
