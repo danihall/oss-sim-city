@@ -1,5 +1,5 @@
 const REGEX_STRING_FLAVOUR =
-  /(?<_text>text|content)|(?<_path>path|url)|(?<_date>date)/i;
+  /(?<_attr>id|key)|(?<_text>text|content)|(?<_path>path|url)|(?<_date>date)/i;
 
 /**
  * This object will be mutated, gradually receiving new keys as getters.
@@ -8,11 +8,17 @@ const REGEX_STRING_FLAVOUR =
  * So once stringified, this object will serve as data to populate each component with the correct props.
  */
 const SOURCE_OF_TRUTH = {
-  boolean() {
+  boolean_true() {
     return true;
+  },
+  boolean_false() {
+    return false;
   },
   number() {
     return +performance.now().toString().slice(-5);
+  },
+  string() {
+    return "Jerky in do qui turducken sed aliquip."; // default fake value.
   },
   string_attr() {
     return `attr-${this.number()}`;
@@ -28,13 +34,10 @@ const SOURCE_OF_TRUTH = {
     return "https://placehold.co/600x400/png";
   },
   string_text() {
-    return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter.";
+    return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.";
   },
   "React.ReactNode"() {
     return "Text that can be contained in a HTMLElement";
-  },
-  raw() {
-    return "raw";
   },
 };
 

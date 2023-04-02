@@ -84,7 +84,7 @@ const _isTruthyValue = function (key) {
  */
 const getSuffix = (prop_key) => {
   const matched_keys = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups || {};
-  return Object.keys(matched_keys).find(_isTruthyValue, matched_keys);
+  return Object.keys(matched_keys).find(_isTruthyValue, matched_keys) ?? "";
 };
 
 const printProcessSuccess = (
@@ -106,10 +106,12 @@ const printProcessSuccess = (
         .join("\n")
     )
   );
-  if (function_prop_detected) {
+  if (function_prop_detected.length) {
     console.log(
       c.yellow(
-        "  (prop.s declaring a Function were discarded,\n  Styleguide-automator cannot generate a fake value for these kind of props)"
+        `  props declaring a Function were discarded:\n    ${function_prop_detected.join(
+          "    \n"
+        )}\n  Styleguide-automator cannot generate a fake value for these kind of props`
       )
     );
   }

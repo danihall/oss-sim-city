@@ -15,10 +15,9 @@ const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const EXTENDS = " extends ";
 const INTERFACE_END = "}";
 const TYPE_ARRAY = "[]";
-const ATTR_SUFFIX = "_attr";
 const FUNCTION_SIGNATURE = "=>";
 
-let function_prop_detected = false;
+let function_prop_detected = [];
 
 /**
  * @see /utils/sourceOfTruth.mjs
@@ -28,10 +27,10 @@ let function_prop_detected = false;
  */
 const _makeFakeType = (prop_key, prop_type) => {
   switch (prop_type) {
-    case "string": {
-      const suffix = getSuffix(prop_key) || ATTR_SUFFIX;
-      return `${prop_type}${suffix}`;
-    }
+    case "string":
+      return `${prop_type}${getSuffix(prop_key)}`;
+    case "boolean":
+      return `${prop_type}_true`;
     default:
       return prop_type;
   }
@@ -53,26 +52,44 @@ const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
     : this[fake_type]?.();
 
   if (!fake_value) {
-    if (prop_type.includes(FUNCTION_SIGNATURE)) {
-      function_prop_detected = true;
-    }
     fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
+    if (prop_type.includes(FUNCTION_SIGNATURE)) {
+      function_prop_detected.push(`${prop_key}: ${prop_type}`);
+      fake_value = undefined; // if prop is supposed to be a function, use undefined as value so that JSON.stringify will discard it.
+    }
   }
 
   return [prop_key, fake_value];
 };
 
 /**
+ * @param {string}  prop_key
+ * @param {string | number | array | object | null} prop_value
+ * @this {array} props_variations
+ */
+const _addPossiblePropVariation = function ([prop_key, prop_value]) {
+  if (typeof prop_value === "boolean") {
+    const props_variant = {
+      ...this[0],
+      [prop_key]: !prop_value,
+    };
+    this.push(props_variant);
+  }
+};
+
+/**
  * Some "meta-programming" is done when using Object.defineProperty().
  * Getters and functions are added to SOURCE_OF_TRUTH object.
- * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions will then be discarded.
- * This is ideal since this will output a json file with values that have been created dynamically at "stringify time".
+ * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions|undefined will then be discarded. (undefined will be discarde when in an object)
+ * We can take advantage of this and output a json file with values that have been created dynamically at "stringify time".
  * @param {string} component_name
  * @param {string} path
  */
 const _updateSourceOfTruth = async ({ component_name, path }) => {
-  const content = await fs.promises.readFile(path, "utf-8"); // Could use createReadStream() and readLine(), but files are expected to be small.
-  const content_as_array = content.split("\n");
+  /** Could use createReadStream() and readLine(), but files are expected to be small. */
+  const content_as_array = await fs.promises
+    .readFile(path, "utf-8")
+    .then((content) => content.split("\n"));
   const props_list = [];
   let interface_name = undefined;
   let extended_interface = false;
@@ -106,10 +123,11 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       enumerable: true,
       value: function () {
         const _props_from_extend = this[extended_interface]?.();
-        const _props = Object.fromEntries(
+        const self_props = Object.fromEntries(
           props_list.map(_mapToSourceOfTruthContext, this)
         );
-        return { ..._props_from_extend, ..._props };
+
+        return { ..._props_from_extend, ...self_props };
       },
     });
   }
@@ -117,10 +135,20 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
     enumerable: true,
     get() {
-      const _self = this; //eslint-disable-line
+      const context = this; //eslint-disable-line
       return {
-        get props() {
-          return _self[interface_name]?.();
+        get props_variations() {
+          if (!(interface_name in context)) {
+            return undefined;
+          }
+
+          const props_variations = [context[interface_name]()];
+          Object.entries(props_variations[0]).forEach(
+            _addPossiblePropVariation,
+            props_variations
+          );
+
+          return props_variations;
         },
       };
     },
