@@ -5,6 +5,7 @@ import css from "./Toolbar.module.scss";
 import { ToolInput, IToolInputProps } from "./ToolInput";
 
 interface IToolbarDropdownProps extends IToolInputProps {
+  test: () => void;
   children_inputs: IToolInputProps[];
 }
 

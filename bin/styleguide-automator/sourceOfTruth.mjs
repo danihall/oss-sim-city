@@ -33,6 +33,9 @@ const SOURCE_OF_TRUTH = {
   "React.ReactNode"() {
     return "Text that can be contained in a HTMLElement";
   },
+  raw() {
+    return "raw";
+  },
 };
 
 export { SOURCE_OF_TRUTH, REGEX_STRING_FLAVOUR };
