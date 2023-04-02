@@ -186,7 +186,7 @@ const main = async () => {
       if (function_prop_detected) {
         console.log(
           c.yellow(
-            "  (A prop declaring a Function was discarded,\n  Styleguide-automator cannot generate a fake value for this kind of prop)"
+            "  (prop.s declaring a Function were discarded,\n  Styleguide-automator cannot generate a fake value for these kind of props)"
           )
         );
       }
