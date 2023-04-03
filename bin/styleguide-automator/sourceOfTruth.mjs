@@ -8,11 +8,8 @@ const REGEX_STRING_FLAVOUR =
  * So once stringified, this object will serve as data to populate each component with the correct props.
  */
 const SOURCE_OF_TRUTH = {
-  boolean_true() {
+  boolean() {
     return true;
-  },
-  boolean_false() {
-    return false;
   },
   number() {
     return +performance.now().toString().slice(-5);
@@ -39,6 +36,7 @@ const SOURCE_OF_TRUTH = {
   "React.ReactNode"() {
     return "Text that can be contained in a HTMLElement";
   },
+  test: "test",
 };
 
 export { SOURCE_OF_TRUTH, REGEX_STRING_FLAVOUR };

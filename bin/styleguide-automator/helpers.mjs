@@ -10,6 +10,12 @@ import {
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";
+const PROP_KEY = '.":';
+const REGEX_PROP_KEY = new RegExp(PROP_KEY);
+const REGEX_PROPS_VARIATIONS = new RegExp(
+  `(?<boolean>${PROP_KEY}true)|(?<static_strings>${PROP_KEY}"(\\\\"[A-Za-z]*\\\\")(\\s\\|\\s\\\\"[A-Za-z]*\\\\")*")`, // backslashes need to be double-ecaped in Regex constructor using emplate string.
+  "g"
+);
 
 /**
  * @param {TemplateStringsArray} static_chunks
@@ -48,7 +54,6 @@ const _makeComponentNameandPathObject = (acc, file) => {
   }
 
   const folder_path = acc[0];
-
   return [
     ...acc,
     { component_name: file.replace(TSX, ""), path: `${folder_path}/${file}` },
@@ -70,12 +75,12 @@ const getComponentNameAndPath = async (component_folder) => {
 };
 
 /**
- * @param {string} key
- * @this {object}
+ * @param {array} entry
  * @returns {boolean}
  */
-const _isTruthyValue = function (key) {
-  return Boolean(this[key]);
+const _isTruthyValue = function (entry) {
+  const [, value] = entry;
+  return Boolean(value);
 };
 
 /**
@@ -83,8 +88,45 @@ const _isTruthyValue = function (key) {
  * @returns {string}
  */
 const getSuffix = (prop_key) => {
-  const matched_keys = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups || {};
-  return Object.keys(matched_keys).find(_isTruthyValue, matched_keys) ?? "";
+  const regex_groups = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups || {};
+  const [matched_group] = Object.entries(regex_groups).find(_isTruthyValue);
+  return matched_group || "";
+};
+
+const PROP_VARIANT_MAP = {
+  boolean(value, props_serialized) {
+    const prop_name = value.match(REGEX_PROP_KEY)[0];
+    return JSON.parse(props_serialized.replace(value, `${prop_name}${!value}`));
+  },
+  static_strings(value, props_serialized) {
+    const prop_name = value.match(REGEX_PROP_KEY)[0];
+
+    return value
+      .replace(prop_name, "")
+      .split("|")
+      .map((string) => {
+        const string_variant = string.replace(/[^A_Za-z]/g, "");
+
+        return JSON.parse(
+          props_serialized.replace(value, `${prop_name}"${string_variant}"`)
+        );
+      });
+  },
+};
+
+/**
+ * @param {object} props
+ * @returns {array}
+ */
+const createPossiblePropsVariants = (props) => {
+  const props_serialized = JSON.stringify(props);
+
+  return Array.from(
+    props_serialized.matchAll(REGEX_PROPS_VARIATIONS),
+    ({ groups }) => Object.entries(groups).find(_isTruthyValue)
+  ).flatMap(([matched_group, matched_value]) => {
+    return PROP_VARIANT_MAP[matched_group](matched_value, props_serialized);
+  });
 };
 
 const printProcessSuccess = (
@@ -129,6 +171,7 @@ export {
   createExportStatement,
   getComponentNameAndPath,
   getSuffix,
+  createPossiblePropsVariants,
   printProcessSuccess,
   printProcessError,
 };

@@ -5,6 +5,7 @@ import {
   createExportStatement,
   getComponentNameAndPath,
   getSuffix,
+  createPossiblePropsVariants,
   printProcessSuccess,
   printProcessError,
 } from "./helpers.mjs";
@@ -12,28 +13,19 @@ import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const EXTENDS = " extends ";
-const INTERFACE_END = "}";
-const TYPE_ARRAY = "[]";
-const FUNCTION_SIGNATURE = "=>";
+
+const HINT_EXTENDS = " extends ";
+const HINT_INTERFACE_END = "}";
+const HINT_ARRAY = "[]";
+const HINT_FUNCTION = "=>";
 
 let function_prop_detected = [];
 
-/**
- * @see /utils/sourceOfTruth.mjs
- * @param {string} key
- * @param {string} type
- * @returns {string}
- */
-const _makeFakeType = (prop_key, prop_type) => {
-  switch (prop_type) {
-    case "string":
-      return `${prop_type}${getSuffix(prop_key)}`;
-    case "boolean":
-      return `${prop_type}_true`;
-    default:
-      return prop_type;
-  }
+/** @see sourceOfTruth.mjs */
+const FAKE_TYPES_MAP = {
+  string(prop_key) {
+    return `string${getSuffix(prop_key)}`;
+  },
 };
 
 /**
@@ -44,8 +36,8 @@ const _makeFakeType = (prop_key, prop_type) => {
  * @returns {array}
  */
 const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
-  const fake_type = _makeFakeType(prop_key, prop_type);
-  const is_array_of_types = fake_type.slice(-2) === TYPE_ARRAY;
+  const fake_type = FAKE_TYPES_MAP[prop_type]?.(prop_key) ?? prop_type;
+  const is_array_of_types = fake_type.slice(-2) === HINT_ARRAY;
 
   let fake_value = is_array_of_types
     ? Array.from({ length: 3 }, () => this[fake_type.slice(0, -2)]?.())
@@ -53,28 +45,13 @@ const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
 
   if (!fake_value) {
     fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
-    if (prop_type.includes(FUNCTION_SIGNATURE)) {
+    if (prop_type.includes(HINT_FUNCTION)) {
       function_prop_detected.push(`${prop_key}: ${prop_type}`);
       fake_value = undefined; // if prop is supposed to be a function, use undefined as value so that JSON.stringify will discard it.
     }
   }
 
   return [prop_key, fake_value];
-};
-
-/**
- * @param {string}  prop_key
- * @param {string | number | array | object | null} prop_value
- * @this {array} props_variations
- */
-const _addPossiblePropVariation = function ([prop_key, prop_value]) {
-  if (typeof prop_value === "boolean") {
-    const props_variant = {
-      ...this[0],
-      [prop_key]: !prop_value,
-    };
-    this.push(props_variant);
-  }
 };
 
 /**
@@ -97,14 +74,14 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
       .match(REGEX_INTERFACE)?.[0]
-      .split(EXTENDS);
+      .split(HINT_EXTENDS);
 
     if (interface_match) {
       interface_name = interface_match[0];
       extended_interface = interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
-        if (content_as_array[j] === INTERFACE_END) {
+        if (content_as_array[j] === HINT_INTERFACE_END) {
           break parent_loop;
         }
 
@@ -142,13 +119,10 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             return undefined;
           }
 
-          const props_variations = [context[interface_name]()];
-          Object.entries(props_variations[0]).forEach(
-            _addPossiblePropVariation,
-            props_variations
-          );
+          const props = context[interface_name]();
+          const props_variations = createPossiblePropsVariants(props);
 
-          return props_variations;
+          return [props, ...props_variations];
         },
       };
     },
