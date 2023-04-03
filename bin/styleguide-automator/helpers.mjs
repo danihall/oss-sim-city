@@ -11,9 +11,9 @@ import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";
 const PROP_KEY = '.":';
-const REGEX_PROP_KEY = new RegExp(PROP_KEY);
+const REGEX_PROP_KEY = new RegExp(`${PROP_KEY}|"`, "g");
 const REGEX_PROPS_VARIATIONS = new RegExp(
-  `(?<boolean>${PROP_KEY}true)|(?<static_strings>${PROP_KEY}"(\\\\"[A-Za-z]*\\\\")(\\s\\|\\s\\\\"[A-Za-z]*\\\\")*")`, // backslashes need to be double-ecaped in Regex constructor using emplate string.
+  `(?<boolean>${PROP_KEY}true)|(?<static_strings>.":"[A-Za-z]*(\\s\\|\\s[A-Za-z]*)*")`, // backslashes need to be double-ecaped in Regex constructor using emplate string.
   "g"
 );
 
@@ -52,7 +52,6 @@ const _makeComponentNameandPathObject = (acc, file) => {
   if (path.extname(file) !== TSX) {
     return acc;
   }
-
   const folder_path = acc[0];
   return [
     ...acc,
@@ -94,21 +93,24 @@ const getSuffix = (prop_key) => {
 };
 
 const PROP_VARIANT_MAP = {
+  _propName(value) {
+    return value.match(REGEX_PROP_KEY)[0];
+  },
   boolean(value, props_serialized) {
-    const prop_name = value.match(REGEX_PROP_KEY)[0];
-    return JSON.parse(props_serialized.replace(value, `${prop_name}${!value}`));
+    return JSON.parse(
+      props_serialized.replace(value, `${this._propName(value)}${!value}`)
+    );
   },
   static_strings(value, props_serialized) {
-    const prop_name = value.match(REGEX_PROP_KEY)[0];
-
     return value
-      .replace(prop_name, "")
+      .replace(REGEX_PROP_KEY, "")
       .split("|")
       .map((string) => {
-        const string_variant = string.replace(/[^A_Za-z]/g, "");
-
         return JSON.parse(
-          props_serialized.replace(value, `${prop_name}"${string_variant}"`)
+          props_serialized.replace(
+            value,
+            `${this._propName(value)}"${string.trim()}"`
+          )
         );
       });
   },

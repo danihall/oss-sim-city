@@ -6,7 +6,7 @@ import { ToolInput, IToolInputProps } from "./ToolInput";
 
 interface IToolbarDropdownProps extends IToolInputProps {
   test_1: boolean;
-  test_2: "sisi" | "la" | "famille" | "posay" | "courvoisier";
+  test_2: "sisi" | "la" | "famille" | "anais" | "demoustier";
   children_inputs: IToolInputProps[];
 }
 

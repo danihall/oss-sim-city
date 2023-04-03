@@ -36,17 +36,17 @@ const FAKE_TYPES_MAP = {
  * @returns {array}
  */
 const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
-  const fake_type = FAKE_TYPES_MAP[prop_type]?.(prop_key) ?? prop_type;
+  const type = prop_type.replaceAll('"', "");
+  const fake_type = FAKE_TYPES_MAP[type]?.(prop_key) ?? type;
   const is_array_of_types = fake_type.slice(-2) === HINT_ARRAY;
-
   let fake_value = is_array_of_types
     ? Array.from({ length: 3 }, () => this[fake_type.slice(0, -2)]?.())
     : this[fake_type]?.();
 
   if (!fake_value) {
-    fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
-    if (prop_type.includes(HINT_FUNCTION)) {
-      function_prop_detected.push(`${prop_key}: ${prop_type}`);
+    fake_value = isNaN(type) ? type : Number(type);
+    if (type.includes(HINT_FUNCTION)) {
+      function_prop_detected.push(`${prop_key}: ${type}`);
       fake_value = undefined; // if prop is supposed to be a function, use undefined as value so that JSON.stringify will discard it.
     }
   }
@@ -86,7 +86,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
         }
 
         const [prop_key, prop_type] = content_as_array[j].split(":");
-
         props_list.push([
           prop_key.replace("?", "").trim(),
           prop_type.replace(";", "").trim(),
@@ -103,7 +102,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
         const self_props = Object.fromEntries(
           props_list.map(_mapToSourceOfTruthContext, this)
         );
-
         return { ..._props_from_extend, ...self_props };
       },
     });
@@ -121,7 +119,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
           const props = context[interface_name]();
           const props_variations = createPossiblePropsVariants(props);
-
           return [props, ...props_variations];
         },
       };
