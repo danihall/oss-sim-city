@@ -31,14 +31,12 @@ let function_prop_detected = [];
  */
 const _getFakeValueFromUserType = function (prop_type) {
   const is_array_of_types = prop_type.slice(-2) === HINT_ARRAY;
-  if (is_array_of_types) {
-    console.log(prop_type);
-    console.log(this[prop_type.slice(0, -2)]());
-  }
 
   let fake_value = is_array_of_types
-    ? Array.from({ length: 5 }, () => this[prop_type.slice(0, -2)]?.())
-    : this[prop_type]?.();
+    ? Array.from({ length: 5 }, () =>
+        SOURCE_OF_TRUTH[prop_type.slice(0, -2)]?.()
+      )
+    : SOURCE_OF_TRUTH[prop_type]?.();
 
   if (!fake_value) {
     fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
@@ -48,7 +46,7 @@ const _getFakeValueFromUserType = function (prop_type) {
 };
 
 /**
- * Some "meta-programming" is done when using Object.defineProperty().
+ * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions|undefined will then be discarded. (undefined will be discarde when in an object)
  * We can take advantage of this and output a json file with values that have been created dynamically at "stringify time".
@@ -77,9 +75,12 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === HINT_INTERFACE_END) {
           /** Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time */
-          SOURCE_OF_TRUTH[interface_name] = function () {
-            return { ...this[extended_interface]?.(), ...props };
-          };
+          Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
+            value: () => ({
+              ...SOURCE_OF_TRUTH[extended_interface]?.(),
+              ...props,
+            }),
+          });
 
           break parent_loop;
         }
@@ -90,36 +91,30 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           function_prop_detected.push(`${prop_key}: ${prop_type}`);
           continue;
         }
-
-        if (prop_type in SOURCE_OF_TRUTH) {
-          props[prop_key] = SOURCE_OF_TRUTH[prop_type]();
-        } else {
-          /** Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time */
-          Object.defineProperty(props, prop_key, {
-            enumerable: true,
-            get: () =>
-              _getFakeValueFromUserType.call(SOURCE_OF_TRUTH, prop_type),
-          });
-        }
+        /** Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time */
+        Object.defineProperty(props, prop_key, {
+          enumerable: true,
+          get: () =>
+            prop_type in SOURCE_OF_TRUTH
+              ? SOURCE_OF_TRUTH[prop_type]()
+              : _getFakeValueFromUserType(prop_type),
+        });
       }
     }
   }
 
   Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
     enumerable: true,
-    get() {
-      const context = this; //eslint-disable-line
-      return {
-        get fake_props() {
-          if (!(interface_name in context)) {
-            return undefined;
-          }
+    get: () => ({
+      get fake_props() {
+        if (!(interface_name in SOURCE_OF_TRUTH)) {
+          return undefined;
+        }
 
-          const props_variations = context[interface_name]();
-          return props_variations;
-        },
-      };
-    },
+        const props_variations = SOURCE_OF_TRUTH[interface_name]();
+        return props_variations;
+      },
+    }),
   });
 };
 
