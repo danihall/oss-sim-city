@@ -9,7 +9,7 @@ const REGEX_STRING_FLAVOUR =
  */
 const SOURCE_OF_TRUTH = {
   boolean() {
-    return true;
+    return "true | false"; // will be mutated to real booleans before JSON.stringify
   },
   number() {
     return +performance.now().toString().slice(-5);

@@ -88,7 +88,7 @@ const _isTruthyValue = function (entry) {
  */
 const getSuffix = (prop_key) => {
   const regex_groups = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups || {};
-  const [matched_group] = Object.entries(regex_groups).find(_isTruthyValue);
+  const matched_group = Object.entries(regex_groups).find(_isTruthyValue);
   return matched_group || "";
 };
 
@@ -129,6 +129,23 @@ const createPossiblePropsVariants = (props) => {
   ).flatMap(([matched_group, matched_value]) => {
     return PROP_VARIANT_MAP[matched_group](matched_value, props_serialized);
   });
+};
+
+/** @see sourceOfTruth.mjs */
+const FAKE_TYPES_MAP = {
+  string(prop_key) {
+    return `string${getSuffix(prop_key)}`;
+  },
+};
+
+const getKeyAndFakeType = (string) => {
+  let [prop_key, prop_type] = string.split(":");
+  prop_key = prop_key.replace("?", "").trim();
+  prop_type = prop_type.replace(/;|"/g, "").trim();
+  prop_type =
+    prop_type === "string" ? `string${getSuffix(prop_key)}` : prop_type;
+
+  return [prop_key, prop_type];
 };
 
 const printProcessSuccess = (
@@ -172,7 +189,7 @@ const printProcessError = (reason) => {
 export {
   createExportStatement,
   getComponentNameAndPath,
-  getSuffix,
+  getKeyAndFakeType,
   createPossiblePropsVariants,
   printProcessSuccess,
   printProcessError,

@@ -4,7 +4,7 @@ import process from "node:process";
 import {
   createExportStatement,
   getComponentNameAndPath,
-  getSuffix,
+  getKeyAndFakeType,
   createPossiblePropsVariants,
   printProcessSuccess,
   printProcessError,
@@ -13,6 +13,7 @@ import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
+const REGEX_PROP_VARIANT = /[A-Za-z]*(\s\|\s[A-Za-z]*)*"/;
 
 const HINT_EXTENDS = " extends ";
 const HINT_INTERFACE_END = "}";
@@ -21,13 +22,6 @@ const HINT_FUNCTION = "=>";
 
 let function_prop_detected = [];
 
-/** @see sourceOfTruth.mjs */
-const FAKE_TYPES_MAP = {
-  string(prop_key) {
-    return `string${getSuffix(prop_key)}`;
-  },
-};
-
 /**
  * It's here that fake props value are set, derived from their documented type ("string", "number", a custom Interface, etc).
  * @param {string} prop_key
@@ -35,27 +29,23 @@ const FAKE_TYPES_MAP = {
  * @this {object} SOURCE_OF_TRUTH
  * @returns {array}
  */
-const _mapToSourceOfTruthContext = function ([prop_key, prop_type]) {
-  const type = prop_type.replaceAll('"', "");
-  const fake_type = FAKE_TYPES_MAP[type]?.(prop_key) ?? type;
-  const is_array_of_types = fake_type.slice(-2) === HINT_ARRAY;
+const _getFakeValueFromUserType = function (prop_type) {
+  const is_array_of_types = prop_type.slice(-2) === HINT_ARRAY;
   let fake_value = is_array_of_types
-    ? Array.from({ length: 3 }, () => this[fake_type.slice(0, -2)]?.())
-    : this[fake_type]?.();
+    ? Array.from({ length: 5 }, () =>
+        SOURCE_OF_TRUTH[prop_type.slice(0, -2)]?.()
+      )
+    : SOURCE_OF_TRUTH[prop_type]?.();
 
   if (!fake_value) {
-    fake_value = isNaN(type) ? type : Number(type);
-    if (type.includes(HINT_FUNCTION)) {
-      function_prop_detected.push(`${prop_key}: ${type}`);
-      fake_value = undefined; // if prop is supposed to be a function, use undefined as value so that JSON.stringify will discard it.
-    }
+    fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
   }
 
-  return [prop_key, fake_value];
+  return fake_value;
 };
 
 /**
- * Some "meta-programming" is done when using Object.defineProperty().
+ * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions|undefined will then be discarded. (undefined will be discarde when in an object)
  * We can take advantage of this and output a json file with values that have been created dynamically at "stringify time".
@@ -67,9 +57,10 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   const content_as_array = await fs.promises
     .readFile(path, "utf-8")
     .then((content) => content.split("\n"));
-  const props_list = [];
+
   let interface_name = undefined;
-  let extended_interface = false;
+  let extended_interface = undefined;
+  const props = {};
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -82,47 +73,48 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === HINT_INTERFACE_END) {
+          /** Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time */
+          Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
+            value: () => ({
+              ...SOURCE_OF_TRUTH[extended_interface]?.(),
+              ...props,
+            }),
+          });
+
           break parent_loop;
         }
 
-        const [prop_key, prop_type] = content_as_array[j].split(":");
-        props_list.push([
-          prop_key.replace("?", "").trim(),
-          prop_type.replace(";", "").trim(),
-        ]);
+        const [prop_key, prop_type] = getKeyAndFakeType(content_as_array[j]);
+
+        if (prop_type.includes(HINT_FUNCTION)) {
+          function_prop_detected.push(`${prop_key}: ${prop_type}`);
+          continue;
+        }
+
+        /** Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time */
+        Object.defineProperty(props, prop_key, {
+          enumerable: true,
+          get: () =>
+            prop_type in SOURCE_OF_TRUTH
+              ? SOURCE_OF_TRUTH[prop_type]()
+              : _getFakeValueFromUserType(prop_type),
+        });
       }
     }
   }
 
-  if (interface_name && props_list.length) {
-    Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
-      enumerable: true,
-      value: function () {
-        const _props_from_extend = this[extended_interface]?.();
-        const self_props = Object.fromEntries(
-          props_list.map(_mapToSourceOfTruthContext, this)
-        );
-        return { ..._props_from_extend, ...self_props };
-      },
-    });
-  }
-
   Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
     enumerable: true,
-    get() {
-      const context = this; //eslint-disable-line
-      return {
-        get props_variations() {
-          if (!(interface_name in context)) {
-            return undefined;
-          }
+    get: () => ({
+      get fake_props() {
+        if (!(interface_name in SOURCE_OF_TRUTH)) {
+          return undefined;
+        }
 
-          const props = context[interface_name]();
-          const props_variations = createPossiblePropsVariants(props);
-          return [props, ...props_variations];
-        },
-      };
-    },
+        const props_variations = SOURCE_OF_TRUTH[interface_name]();
+        return props_variations;
+      },
+    }),
   });
 };
 
