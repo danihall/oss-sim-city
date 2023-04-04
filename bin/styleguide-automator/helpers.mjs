@@ -53,6 +53,7 @@ const _makeComponentNameandPathObject = (acc, file) => {
     return acc;
   }
   const folder_path = acc[0];
+
   return [
     ...acc,
     { component_name: file.replace(TSX, ""), path: `${folder_path}/${file}` },
@@ -77,21 +78,8 @@ const getComponentNameAndPath = async (component_folder) => {
  * @param {array} entry
  * @returns {boolean}
  */
-const _isTruthyValue = function (entry) {
-  const [, value] = entry;
+const _isTruthyValue = function ([, value]) {
   return Boolean(value);
-};
-
-/**
- * @param {string} prop_key
- * @returns {string}
- */
-const getSuffix = (prop_key) => {
-  const regex_groups = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups;
-
-  return regex_groups
-    ? Object.entries(regex_groups).find(_isTruthyValue)[0]
-    : "";
 };
 
 const PROP_VARIANT_MAP = {
@@ -136,16 +124,31 @@ const createPossiblePropsVariants = (props) => {
 /** @see sourceOfTruth.mjs */
 const FAKE_TYPES_MAP = {
   string(prop_key) {
-    return `string${getSuffix(prop_key)}`;
+    return `string${_getSuffixForString(prop_key)}`;
   },
 };
 
+/**
+ * @param {string} prop_key
+ * @returns {string}
+ */
+const _getSuffixForString = (prop_key) => {
+  const regex_groups = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups;
+
+  return regex_groups
+    ? Object.entries(regex_groups).find(_isTruthyValue)[0]
+    : "";
+};
+
+/**
+ * @param {string} string
+ * @returns {array}
+ */
 const getKeyAndFakeType = (string) => {
   let [prop_key, prop_type] = string.split(":");
   prop_key = prop_key.replace("?", "").trim();
   prop_type = prop_type.replace(/;|"/g, "").trim();
-  prop_type =
-    prop_type === "string" ? `string${getSuffix(prop_key)}` : prop_type;
+  prop_type += prop_type === "string" ? _getSuffixForString(prop_key) : "";
 
   return [prop_key, prop_type];
 };

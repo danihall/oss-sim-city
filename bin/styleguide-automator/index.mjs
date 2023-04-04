@@ -31,16 +31,17 @@ let function_prop_detected = [];
  */
 const _getFakeValueFromUserType = function (prop_type) {
   const is_array_of_types = prop_type.slice(-2) === HINT_ARRAY;
+  const value_generator = is_array_of_types
+    ? SOURCE_OF_TRUTH[prop_type.slice(0, -2)]
+    : SOURCE_OF_TRUTH[prop_type];
+
   let fake_value = is_array_of_types
-    ? Array.from({ length: 5 }, () =>
-        SOURCE_OF_TRUTH[prop_type.slice(0, -2)]?.()
-      )
-    : SOURCE_OF_TRUTH[prop_type]?.();
+    ? Array.from({ length: 5 }, () => value_generator?.())
+    : value_generator?.();
 
   if (!fake_value) {
     fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
   }
-
   return fake_value;
 };
 
@@ -106,11 +107,11 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
     enumerable: true,
     get: () => ({
+      /** @todo: add "info" object holding data about the component (child components, interfaces mapping) to be used by Styleguide page */
       get fake_props() {
         if (!(interface_name in SOURCE_OF_TRUTH)) {
           return undefined;
         }
-
         const props_variations = SOURCE_OF_TRUTH[interface_name]();
         return props_variations;
       },
