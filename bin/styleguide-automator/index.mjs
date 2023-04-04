@@ -31,7 +31,6 @@ let function_prop_detected = [];
  */
 const _getFakeValueFromUserType = function (prop_type) {
   const is_array_of_types = prop_type.slice(-2) === HINT_ARRAY;
-
   let fake_value = is_array_of_types
     ? Array.from({ length: 5 }, () =>
         SOURCE_OF_TRUTH[prop_type.slice(0, -2)]?.()
@@ -91,6 +90,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           function_prop_detected.push(`${prop_key}: ${prop_type}`);
           continue;
         }
+
         /** Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time */
         Object.defineProperty(props, prop_key, {
           enumerable: true,
