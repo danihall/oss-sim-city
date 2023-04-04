@@ -131,6 +131,23 @@ const createPossiblePropsVariants = (props) => {
   });
 };
 
+/** @see sourceOfTruth.mjs */
+const FAKE_TYPES_MAP = {
+  string(prop_key) {
+    return `string${getSuffix(prop_key)}`;
+  },
+};
+
+const getKeyAndFakeType = (string) => {
+  let [prop_key, prop_type] = string.split(":");
+  prop_key = prop_key.replace("?", "").trim();
+  prop_type = prop_type.replace(/;|"/g, "").trim();
+  prop_type =
+    prop_type === "string" ? `string${getSuffix(prop_key)}` : prop_type;
+
+  return [prop_key, prop_type];
+};
+
 const printProcessSuccess = (
   process_duration,
   components_name_and_path,
@@ -172,7 +189,7 @@ const printProcessError = (reason) => {
 export {
   createExportStatement,
   getComponentNameAndPath,
-  getSuffix,
+  getKeyAndFakeType,
   createPossiblePropsVariants,
   printProcessSuccess,
   printProcessError,
