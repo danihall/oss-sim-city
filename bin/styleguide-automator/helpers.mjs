@@ -87,9 +87,11 @@ const _isTruthyValue = function (entry) {
  * @returns {string}
  */
 const getSuffix = (prop_key) => {
-  const regex_groups = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups || {};
-  const matched_group = Object.entries(regex_groups).find(_isTruthyValue);
-  return matched_group || "";
+  const regex_groups = REGEX_STRING_FLAVOUR.exec(prop_key)?.groups;
+
+  return regex_groups
+    ? Object.entries(regex_groups).find(_isTruthyValue)[0]
+    : "";
 };
 
 const PROP_VARIANT_MAP = {
