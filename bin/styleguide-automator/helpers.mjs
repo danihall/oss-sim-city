@@ -1,8 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import c from "chalk";
-
 import {
   COMPONENTS_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
@@ -10,12 +8,7 @@ import {
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";
-const PROP_KEY = '.":';
-const REGEX_PROP_KEY = new RegExp(`${PROP_KEY}|"`, "g");
-const REGEX_PROPS_VARIATIONS = new RegExp(
-  `(?<boolean>${PROP_KEY}true)|(?<static_strings>.":"[A-Za-z]*(\\s\\|\\s[A-Za-z]*)*")`, // backslashes need to be double-ecaped in Regex constructor using emplate string.
-  "g"
-);
+const REGEX_PROP_VARIANT = /([A-Za-z]*\s\|\s[A-Za-z]*)*/g;
 
 /**
  * @param {TemplateStringsArray} static_chunks
@@ -48,14 +41,14 @@ const createExportStatement = ({ component_name, path }) => {
  * @param {string} file
  * @returns {boolean}
  */
-const _makeComponentNameandPathObject = (acc, file) => {
+const _makeComponentNameandPathObject = (accumulated_files, file) => {
   if (path.extname(file) !== TSX) {
-    return acc;
+    return accumulated_files;
   }
-  const folder_path = acc[0];
+  const folder_path = accumulated_files[0];
 
   return [
-    ...acc,
+    ...accumulated_files,
     { component_name: file.replace(TSX, ""), path: `${folder_path}/${file}` },
   ];
 };
@@ -80,52 +73,6 @@ const getComponentNameAndPath = async (component_folder) => {
  */
 const _isTruthyValue = function ([, value]) {
   return Boolean(value);
-};
-
-const PROP_VARIANT_MAP = {
-  _propName(value) {
-    return value.match(REGEX_PROP_KEY)[0];
-  },
-  boolean(value, props_serialized) {
-    return JSON.parse(
-      props_serialized.replace(value, `${this._propName(value)}${!value}`)
-    );
-  },
-  static_strings(value, props_serialized) {
-    return value
-      .replace(REGEX_PROP_KEY, "")
-      .split("|")
-      .map((string) => {
-        return JSON.parse(
-          props_serialized.replace(
-            value,
-            `${this._propName(value)}"${string.trim()}"`
-          )
-        );
-      });
-  },
-};
-
-/**
- * @param {object} props
- * @returns {array}
- */
-const createPossiblePropsVariants = (props) => {
-  const props_serialized = JSON.stringify(props);
-
-  return Array.from(
-    props_serialized.matchAll(REGEX_PROPS_VARIATIONS),
-    ({ groups }) => Object.entries(groups).find(_isTruthyValue)
-  ).flatMap(([matched_group, matched_value]) => {
-    return PROP_VARIANT_MAP[matched_group](matched_value, props_serialized);
-  });
-};
-
-/** @see sourceOfTruth.mjs */
-const FAKE_TYPES_MAP = {
-  string(prop_key) {
-    return `string${_getSuffixForString(prop_key)}`;
-  },
 };
 
 /**
@@ -153,41 +100,70 @@ const getKeyAndFakeType = (string) => {
   return [prop_key, prop_type];
 };
 
+/**
+ * @param {string | boolean} variant
+ * @param {number} index
+ * @this {object} prop_name, variant_list
+ * @returns {object}
+ */
+const _addPropVariantInPlace = function (variant, index) {
+  return { ...{ [this.prop_name]: variant }, ...this.variant_list[index] };
+};
+
+/**
+ * @param {array} variant_list
+ * @param {array} entry
+ * @returns {array}
+ */
+const getPropsVariations = (variant_list, entry) => {
+  const [prop_name, prop_value] = entry;
+  const context = { prop_name, variant_list };
+
+  switch (typeof prop_value) {
+    case "string": {
+      const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
+
+      return prop_to_vary
+        ? prop_to_vary.split(" | ").map(_addPropVariantInPlace, context)
+        : variant_list;
+    }
+    case "boolean": {
+      return [true, false].map(_addPropVariantInPlace, context);
+    }
+    default:
+      return variant_list;
+  }
+};
+
 const printProcessSuccess = (
   process_duration,
   components_name_and_path,
   function_prop_detected
 ) => {
   console.log(
-    c.blueBright.bold(
-      `  components exports and render specs created in ${process_duration
-        .toString()
-        .slice(0, 4)}ms:`
-    )
+    `  components exports and render specs created in ${process_duration
+      .toString()
+      .slice(0, 4)}ms:`
   );
   console.log(
-    c.blueBright(
-      components_name_and_path
-        .map(({ component_name }) => `    <${component_name}/>`)
-        .join("\n")
-    )
+    components_name_and_path
+      .map(({ component_name }) => `    <${component_name}/>`)
+      .join("\n")
   );
   if (function_prop_detected.length) {
     console.log(
-      c.yellow(
-        `  props declaring a Function were discarded:\n    ${function_prop_detected.join(
-          "    \n"
-        )}\n  Styleguide-automator cannot generate a fake value for these kind of props`
-      )
+      `  props declaring a Function were discarded:\n    ${function_prop_detected.join(
+        "    \n"
+      )}\n  Styleguide-automator cannot generate a fake value for these kind of props`
     );
   }
 };
 
 const printProcessError = (reason) => {
   console.log(
-    c.red(`  Styleguide-automator encountered an error:
+    `  Styleguide-automator encountered an error:
       ${reason}
-  Process exited.`)
+  Process exited.`
   );
 };
 
@@ -195,7 +171,7 @@ export {
   createExportStatement,
   getComponentNameAndPath,
   getKeyAndFakeType,
-  createPossiblePropsVariants,
+  getPropsVariations,
   printProcessSuccess,
   printProcessError,
 };

@@ -5,7 +5,7 @@ import {
   createExportStatement,
   getComponentNameAndPath,
   getKeyAndFakeType,
-  createPossiblePropsVariants,
+  getPropsVariations,
   printProcessSuccess,
   printProcessError,
 } from "./helpers.mjs";
@@ -13,8 +13,6 @@ import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const REGEX_PROP_VARIANT = /[A-Za-z]*(\s\|\s[A-Za-z]*)*"/;
-
 const HINT_EXTENDS = " extends ";
 const HINT_INTERFACE_END = "}";
 const HINT_ARRAY = "[]";
@@ -113,6 +111,13 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           return undefined;
         }
         const props_variations = SOURCE_OF_TRUTH[interface_name]();
+
+        const test = Object.entries(props_variations).reduce(
+          getPropsVariations,
+          []
+        );
+        console.log(test);
+
         return props_variations;
       },
     }),

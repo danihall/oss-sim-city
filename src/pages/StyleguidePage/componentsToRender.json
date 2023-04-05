@@ -8,47 +8,47 @@
   },
   "ToolInput": {
     "fake_props": {
-      "id": "attr-40634",
+      "id": "attr-51267",
       "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
       "img_path": "https://placehold.co/600x400/png"
     }
   },
-  "Toolbar": {},
   "ToolbarDropdown": {
     "fake_props": {
-      "id": "attr-44122",
+      "id": "attr-93366",
       "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
       "img_path": "https://placehold.co/600x400/png",
-      "test_1": "true | false",
+      "test_1": true,
       "test_2": "sisi | la | famille | anais | demoustier",
       "test_3": "Jerky in do qui turducken sed aliquip.",
       "children_inputs": [
         {
-          "id": "attr-50816",
+          "id": "attr-52775",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
           "img_path": "https://placehold.co/600x400/png"
         },
         {
-          "id": "attr-61512",
+          "id": "attr-17315",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
           "img_path": "https://placehold.co/600x400/png"
         },
         {
-          "id": "attr-24982",
+          "id": "attr-1782",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
           "img_path": "https://placehold.co/600x400/png"
         },
         {
-          "id": "attr-99055",
+          "id": "attr-40169",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
           "img_path": "https://placehold.co/600x400/png"
         },
         {
-          "id": "attr-86692",
+          "id": "attr-84813",
           "text": "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.",
           "img_path": "https://placehold.co/600x400/png"
         }
       ]
     }
-  }
+  },
+  "Toolbar": {}
 }
