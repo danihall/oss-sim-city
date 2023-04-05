@@ -9,6 +9,7 @@ import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";
 const REGEX_PROP_VARIANT = /([A-Za-z]*\s\|\s[A-Za-z]*)*/g;
+const STRINGS_SEPARATOR = " | ";
 
 /**
  * @param {TemplateStringsArray} static_chunks
@@ -103,35 +104,40 @@ const getKeyAndFakeType = (string) => {
 /**
  * @param {string | boolean} variant
  * @param {number} index
- * @this {object} prop_name, variant_list
+ * @this {object} prop_name, accumulated_props_list
  * @returns {object}
  */
 const _addPropVariantInPlace = function (variant, index) {
-  return { ...{ [this.prop_name]: variant }, ...this.variant_list[index] };
+  return {
+    ...{ [this.prop_name]: variant },
+    ...this.accumulated_props_list[index],
+  };
 };
 
 /**
- * @param {array} variant_list
+ * @param {array} accumulated_props_list
  * @param {array} entry
  * @returns {array}
  */
-const getPropsVariations = (variant_list, entry) => {
+const getPropsVariations = (accumulated_props_list, entry) => {
   const [prop_name, prop_value] = entry;
-  const context = { prop_name, variant_list };
+  const context = { prop_name, accumulated_props_list };
 
   switch (typeof prop_value) {
     case "string": {
       const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
 
       return prop_to_vary
-        ? prop_to_vary.split(" | ").map(_addPropVariantInPlace, context)
-        : variant_list;
+        ? prop_to_vary
+            .split(STRINGS_SEPARATOR)
+            .map(_addPropVariantInPlace, context)
+        : accumulated_props_list;
     }
     case "boolean": {
       return [true, false].map(_addPropVariantInPlace, context);
     }
     default:
-      return variant_list;
+      return accumulated_props_list;
   }
 };
 
