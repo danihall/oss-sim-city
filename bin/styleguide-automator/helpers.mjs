@@ -120,34 +120,6 @@ const _createPropVariant = function (variant) {
   return { [this]: variant };
 };
 
-const _PROP_VARIANT_MAP = {
-  string(prop_name, prop_value, accumulated_props) {
-    const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
-
-    if (prop_to_vary) {
-      const splitted = prop_to_vary.split(STRINGS_SEPARATOR);
-      const first_variant = { [prop_name]: splitted[0] };
-
-      return [
-        ...accumulated_props.map(addPropVariantInPlace, first_variant),
-        ...splitted.map(_createPropVariant, prop_name),
-      ];
-    }
-    return accumulated_props;
-  },
-  boolean(prop_name, _prop_value, accumulated_props) {
-    const booleans = BOOLEANS.map(_createPropVariant, prop_name);
-
-    if (accumulated_props.length) {
-      return [
-        ...accumulated_props,
-        ...booleans.map(addPropVariantInPlace, accumulated_props[0]),
-      ];
-    }
-    return [...booleans];
-  },
-};
-
 /**
  * @param {array} accumulated_props
  * @param {array} entry
@@ -156,13 +128,35 @@ const _PROP_VARIANT_MAP = {
 const getPropsVariations = (accumulated_props, entry) => {
   const [prop_name, prop_value] = entry;
 
-  return (
-    _PROP_VARIANT_MAP[typeof prop_value]?.(
-      prop_name,
-      prop_value,
-      accumulated_props
-    ) || accumulated_props
-  );
+  switch (typeof prop_value) {
+    case "string": {
+      const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
+
+      if (prop_to_vary) {
+        const splitted = prop_to_vary.split(STRINGS_SEPARATOR);
+        const first_variant = { [prop_name]: splitted[0] };
+
+        return [
+          ...accumulated_props.map(addPropVariantInPlace, first_variant),
+          ...splitted.map(_createPropVariant, prop_name),
+        ];
+      }
+      return accumulated_props;
+    }
+    case "boolean": {
+      const booleans = BOOLEANS.map(_createPropVariant, prop_name);
+
+      if (accumulated_props.length) {
+        return [
+          ...accumulated_props,
+          ...booleans.map(addPropVariantInPlace, accumulated_props[0]),
+        ];
+      }
+      return [...booleans];
+    }
+    default:
+      return accumulated_props;
+  }
 };
 
 export {
