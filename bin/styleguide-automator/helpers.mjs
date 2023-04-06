@@ -8,6 +8,8 @@ import {
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";
+const QUESTION_MARK = "?";
+const REGEX_TYPE_USELESS_CHAR = /;|"/g;
 const REGEX_PROP_VARIANT = /([A-Za-z]*\s\|\s[A-Za-z]*)*/g;
 const STRINGS_SEPARATOR = " | ";
 const BOOLEANS = [true, false];
@@ -95,11 +97,14 @@ const _getSuffixForString = (prop_key) => {
  */
 const getKeyAndFakeType = (string) => {
   let [prop_key, prop_type] = string.split(":");
-  prop_key = prop_key.replace("?", "").trim();
-  prop_type = prop_type.replace(/;|"/g, "").trim();
-  prop_type += prop_type === "string" ? _getSuffixForString(prop_key) : "";
+  prop_key = prop_key.replace(QUESTION_MARK, "").trim();
+  prop_type = prop_type.replace(REGEX_TYPE_USELESS_CHAR, "").trim();
+  const fake_type =
+    prop_type === "string"
+      ? `${prop_type}${_getSuffixForString(prop_key)}`
+      : prop_type;
 
-  return [prop_key, prop_type];
+  return [prop_key, prop_type, fake_type];
 };
 
 /**
@@ -122,12 +127,10 @@ const _createPropVariant = function (variant) {
 
 /**
  * @param {array} accumulated_props
- * @param {array} entry
+ * @param {array} entry: prop_name, prop_value
  * @returns {array}
  */
-const getPropsVariations = (accumulated_props, entry) => {
-  const [prop_name, prop_value] = entry;
-
+const getPropsVariations = (accumulated_props, [prop_name, prop_value]) => {
   switch (typeof prop_value) {
     case "string": {
       const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];

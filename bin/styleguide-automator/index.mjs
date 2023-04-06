@@ -59,7 +59,8 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
   let interface_name = undefined;
   let extended_interface = undefined;
-  const props = {};
+  const fake_props = {};
+  const raw_props = {};
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -76,27 +77,31 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
             value: () => ({
               ...SOURCE_OF_TRUTH[extended_interface]?.(),
-              ...props,
+              ...fake_props,
             }),
           });
 
           break parent_loop;
         }
 
-        const [prop_key, prop_type] = getKeyAndFakeType(content_as_array[j]);
+        const [prop_key, prop_type, fake_type] = getKeyAndFakeType(
+          content_as_array[j]
+        );
 
-        if (prop_type.includes(HINT_FUNCTION)) {
-          function_prop_detected.push(`${prop_key}: ${prop_type}`);
+        if (fake_type.includes(HINT_FUNCTION)) {
+          function_prop_detected.push(`${prop_key}: ${fake_type}`);
           continue;
         }
 
+        raw_props[prop_key] = prop_type;
+
         /** Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time */
-        Object.defineProperty(props, prop_key, {
+        Object.defineProperty(fake_props, prop_key, {
           enumerable: true,
           get: () =>
-            prop_type in SOURCE_OF_TRUTH
-              ? SOURCE_OF_TRUTH[prop_type]()
-              : _getFakeValueFromUserType(prop_type),
+            fake_type in SOURCE_OF_TRUTH
+              ? SOURCE_OF_TRUTH[fake_type]()
+              : _getFakeValueFromUserType(fake_type),
         });
       }
     }
@@ -105,21 +110,24 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
     enumerable: true,
     get: () => ({
-      /** @todo: add "info" object holding data about the component (child components, interfaces mapping) to be used by Styleguide page */
+      info: {
+        interface_name,
+        props: { ...raw_props },
+      },
       get fake_props() {
         if (!(interface_name in SOURCE_OF_TRUTH)) {
           return undefined;
         }
 
-        const props = SOURCE_OF_TRUTH[interface_name]();
-        const props_variations = Object.entries(props).reduce(
+        const fake_props = SOURCE_OF_TRUTH[interface_name]();
+        const props_variations = Object.entries(fake_props).reduce(
           getPropsVariations,
           []
         );
 
         return props_variations.length
-          ? props_variations.map(addPropVariantInPlace, props)
-          : [props];
+          ? props_variations.map(addPropVariantInPlace, fake_props)
+          : [fake_props];
       },
     }),
   });
