@@ -10,6 +10,7 @@ import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 const TSX = ".tsx";
 const REGEX_PROP_VARIANT = /([A-Za-z]*\s\|\s[A-Za-z]*)*/g;
 const STRINGS_SEPARATOR = " | ";
+const BOOLEANS = [true, false];
 
 /**
  * @param {TemplateStringsArray} static_chunks
@@ -102,74 +103,65 @@ const getKeyAndFakeType = (string) => {
 };
 
 /**
- * @param {string | boolean} variant
- * @param {number} index
- * @this {object} prop_name, accumulated_props_list
+ * @param {object} entry
+ * @this {object} other entry at same index
  * @returns {object}
  */
-const _addPropVariantInPlace = function (variant, index) {
-  return {
-    ...{ [this.prop_name]: variant },
-    ...this.accumulated_props_list[index],
-  };
+const addPropVariantInPlace = function (entry) {
+  return { ...this, ...entry }; // order is important, entry must override this.
 };
 
 /**
- * @param {array} accumulated_props_list
+ * @param {string | boolean} variant
+ * @this {string} prop_name
+ * @returns {object}
+ */
+const _createPropVariant = function (variant) {
+  return { [this]: variant };
+};
+
+const _PROP_VARIANT_MAP = {
+  string(prop_name, prop_value, accumulated_props) {
+    const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
+
+    if (prop_to_vary) {
+      const splitted = prop_to_vary.split(STRINGS_SEPARATOR);
+      const first_variant = { [prop_name]: splitted[0] };
+
+      return [
+        ...accumulated_props.map(addPropVariantInPlace, first_variant),
+        ...splitted.map(_createPropVariant, prop_name),
+      ];
+    }
+    return accumulated_props;
+  },
+  boolean(prop_name, _prop_value, accumulated_props) {
+    const booleans = BOOLEANS.map(_createPropVariant, prop_name);
+
+    if (accumulated_props.length) {
+      return [
+        ...accumulated_props,
+        ...booleans.map(addPropVariantInPlace, accumulated_props[0]),
+      ];
+    }
+    return [...booleans];
+  },
+};
+
+/**
+ * @param {array} accumulated_props
  * @param {array} entry
  * @returns {array}
  */
-const getPropsVariations = (accumulated_props_list, entry) => {
+const getPropsVariations = (accumulated_props, entry) => {
   const [prop_name, prop_value] = entry;
-  const context = { prop_name, accumulated_props_list };
 
-  switch (typeof prop_value) {
-    case "string": {
-      const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
-
-      return prop_to_vary
-        ? prop_to_vary
-            .split(STRINGS_SEPARATOR)
-            .map(_addPropVariantInPlace, context)
-        : accumulated_props_list;
-    }
-    case "boolean": {
-      return [true, false].map(_addPropVariantInPlace, context);
-    }
-    default:
-      return accumulated_props_list;
-  }
-};
-
-const printProcessSuccess = (
-  process_duration,
-  components_name_and_path,
-  function_prop_detected
-) => {
-  console.log(
-    `  components exports and render specs created in ${process_duration
-      .toString()
-      .slice(0, 4)}ms:`
-  );
-  console.log(
-    components_name_and_path
-      .map(({ component_name }) => `    <${component_name}/>`)
-      .join("\n")
-  );
-  if (function_prop_detected.length) {
-    console.log(
-      `  props declaring a Function were discarded:\n    ${function_prop_detected.join(
-        "    \n"
-      )}\n  Styleguide-automator cannot generate a fake value for these kind of props`
-    );
-  }
-};
-
-const printProcessError = (reason) => {
-  console.log(
-    `  Styleguide-automator encountered an error:
-      ${reason}
-  Process exited.`
+  return (
+    _PROP_VARIANT_MAP[typeof prop_value]?.(
+      prop_name,
+      prop_value,
+      accumulated_props
+    ) || accumulated_props
   );
 };
 
@@ -177,7 +169,6 @@ export {
   createExportStatement,
   getComponentNameAndPath,
   getKeyAndFakeType,
+  addPropVariantInPlace,
   getPropsVariations,
-  printProcessSuccess,
-  printProcessError,
 };

@@ -5,11 +5,11 @@ import {
   createExportStatement,
   getComponentNameAndPath,
   getKeyAndFakeType,
+  addPropVariantInPlace,
   getPropsVariations,
-  printProcessSuccess,
-  printProcessError,
 } from "./helpers.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
+import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
@@ -110,15 +110,16 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
         if (!(interface_name in SOURCE_OF_TRUTH)) {
           return undefined;
         }
-        const props_variations = SOURCE_OF_TRUTH[interface_name]();
 
-        const test = Object.entries(props_variations).reduce(
+        const props = SOURCE_OF_TRUTH[interface_name]();
+        const props_variations = Object.entries(props).reduce(
           getPropsVariations,
           []
         );
-        console.log(test);
 
-        return props_variations;
+        return props_variations.length
+          ? props_variations.map(addPropVariantInPlace, props)
+          : [props];
       },
     }),
   });
