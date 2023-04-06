@@ -112,7 +112,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
     get: () => ({
       info: {
         interface_name,
-        props: { ...raw_props },
+        props: Object.keys(raw_props).length ? { ...raw_props } : null,
       },
       get fake_props() {
         if (!(interface_name in SOURCE_OF_TRUTH)) {
