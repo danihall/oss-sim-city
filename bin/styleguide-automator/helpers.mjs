@@ -35,7 +35,8 @@ const _template = (static_chunks, ...rest) => {
  * @returns {string}
  */
 const createExportStatement = ({ component_name, path }) => {
-  return _template`export {${component_name}} from "${path.replace(
+  const sanitized_path = path.replace(TSX, "");
+  return _template`export {${component_name}} from "${sanitized_path.replace(
     COMPONENTS_PATH,
     PATH_FROM_STYLEGUIDE_TO_COMPONENTS
   )}";`;

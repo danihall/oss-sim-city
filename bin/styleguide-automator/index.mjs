@@ -116,17 +116,17 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       },
       get fake_props() {
         if (!(interface_name in SOURCE_OF_TRUTH)) {
-          return undefined;
+          return null;
         }
 
         const fake_props = SOURCE_OF_TRUTH[interface_name]();
-        const props_variations = Object.entries(fake_props).reduce(
+        const fake_props_variations = Object.entries(fake_props).reduce(
           getPropsVariations,
           []
         );
 
-        return props_variations.length
-          ? props_variations.map(addPropVariantInPlace, fake_props)
+        return fake_props_variations.length
+          ? fake_props_variations.map(addPropVariantInPlace, fake_props)
           : [fake_props];
       },
     }),
