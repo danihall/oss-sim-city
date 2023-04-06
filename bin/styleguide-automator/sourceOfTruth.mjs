@@ -1,6 +1,19 @@
 const REGEX_STRING_FLAVOUR =
   /(?<_attr>id|key)|(?<_text>text|content)|(?<_path>path|url)|(?<_date>date)/i;
 
+const IMAGES = [
+  "https://placehold.co/600x400/png",
+  "https://placehold.co/600x400/ff0000",
+  "https://placehold.co/600x400/00ff00",
+  "https://placehold.co/600x400/0000ff",
+  "https://placehold.co/600x400/ffff00",
+  "https://placehold.co/600x400/ff00ff",
+  "https://placehold.co/600x400/00ffff",
+  "https://placehold.co/600x400/808080",
+  "https://placehold.co/600x400/ffffff",
+  "https://placehold.co/600x400/000000",
+];
+
 /**
  * This object will be mutated, gradually receiving new keys as getters.
  * The added getters will use the function defined below to create fake values for the styleguide.
@@ -28,7 +41,8 @@ const SOURCE_OF_TRUTH = {
     }).format(Date.now());
   },
   string_path() {
-    return "https://placehold.co/600x400/png";
+    const randomIndex = Math.floor(Math.random() * IMAGES.length);
+    return IMAGES[randomIndex];
   },
   string_text() {
     return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.";
