@@ -13,7 +13,7 @@ const printProcessSuccess = (
   process.stdout.write(
     components_name_and_path
       .map(({ component_name }) => `    <${component_name}/>`)
-      .join("\n")
+      .join("\n") + "\n"
   );
   if (function_prop_detected.length) {
     process.stdout.write(

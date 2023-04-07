@@ -10,23 +10,29 @@ const StyleguidePage = () => {
       <h1>Styleguide</h1>
       <div>
         {Object.entries(components_data).map(
-          ([component_name, { fake_props }]) => {
+          ([component_name, { fake_props }], index) => {
             const Component = components[component_name as TComponent];
 
             return (
-              <>
+              <div key={index.toString()}>
                 <h2>{component_name}</h2>
-                {fake_props?.map((props: object, index: number) => {
-                  const { children, ...props_to_apply } = props as any;
-                  return (
-                    <div key={index.toString()}>
-                      <Component {...props_to_apply}>
-                        {children ? children : null}
-                      </Component>
-                    </div>
-                  );
-                })}
-              </>
+                {fake_props ? (
+                  fake_props.map((props: object, index: number) => {
+                    const { children, ...props_to_apply } = props as any;
+
+                    return (
+                      <div key={index.toString()}>
+                        <Component {...props_to_apply}>
+                          {children ? children : null}
+                        </Component>
+                      </div>
+                    );
+                  })
+                ) : (
+                  //@ts-expect-error
+                  <Component />
+                )}
+              </div>
             );
           }
         )}
