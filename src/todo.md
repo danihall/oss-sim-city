@@ -1,6 +1,9 @@
-- défileur de news
-- minimap (<map>)
-- <dialog> conseiller
-- <dialog> outils gestion finance
-- <inputs range> réglage vitesse
--
+- défileur de news.
+- minimap (`<map>`).
+- `<dialog>` conseiller.
+- `<dialog>` outils gestion finance.
+- `<dialog>` data visualisation.
+- `<inputs range>` réglage vitesse.
+- cellule.
+- grille de cellules.
+- `<dialog>` journal.
