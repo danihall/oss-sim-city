@@ -1,0 +1,6 @@
+- défileur de news
+- minimap (<map>)
+- <dialog> conseiller
+- <dialog> outils gestion finance
+- <inputs range> réglage vitesse
+-
