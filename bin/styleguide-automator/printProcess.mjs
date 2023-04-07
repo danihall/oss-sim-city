@@ -19,7 +19,7 @@ const printProcessSuccess = (
     process.stdout.write(
       `  props declaring a Function were discarded:\n    ${function_prop_detected.join(
         "    \n"
-      )}\n  Styleguide-automator cannot generate a fake value for these kind of props`
+      )}\n  Styleguide-automator cannot generate a fake value for these kind of props\n`
     );
   }
 };
@@ -28,8 +28,12 @@ const printProcessError = (reason) => {
   process.stderr.write(
     `\n  Styleguide-automator encountered an error:
         ${reason}
-    Process exited.`
+    Process exited.\n`
   );
 };
 
-export { printProcessSuccess, printProcessError };
+const printInvalidConfig = (message) => {
+  process.stderr.write(`\n  ${message}\n`);
+};
+
+export { printProcessSuccess, printProcessError, printInvalidConfig };
