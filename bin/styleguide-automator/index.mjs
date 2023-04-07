@@ -134,6 +134,19 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 };
 
 /**
+ * @returns {Promise}
+ */
+const _createStyleguideDirectory = () => {
+  return fs.promises
+    .mkdir(STYLEGUIDE_PATH)
+    .catch((error) =>
+      error.code === "EEXIST"
+        ? Promise.resolve(error.path)
+        : Promise.reject(error)
+    );
+};
+
+/**
  * @see package.json
  */
 const main = async () => {
@@ -148,18 +161,19 @@ const main = async () => {
     .join("");
 
   Promise.all(components_name_and_path.map(_updateSourceOfTruth))
-    .then(() => {
-      return Promise.all([
+    .then(() => _createStyleguideDirectory())
+    .then((styleguide_path) =>
+      Promise.all([
         fs.promises.writeFile(
-          `${STYLEGUIDE_PATH}/index.ts`,
+          `${styleguide_path}/index.ts`,
           components_export_statements
         ),
         fs.promises.writeFile(
-          `${STYLEGUIDE_PATH}/componentsToRender.json`,
+          `${styleguide_path}/componentsToRender.json`,
           JSON.stringify(SOURCE_OF_TRUTH, null, 2)
         ),
-      ]);
-    })
+      ])
+    )
     .then(() => {
       printProcessSuccess(
         performance.now() - t1,
