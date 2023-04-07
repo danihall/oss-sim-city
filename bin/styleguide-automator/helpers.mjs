@@ -4,7 +4,7 @@ import path from "node:path";
 import {
   COMPONENTS_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-} from "./paths.mjs";
+} from "./getConfig.mjs";
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import process from "node:process";
 
+import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
 import {
   createExportStatement,
   getComponentNameAndPath,
@@ -8,7 +9,6 @@ import {
   addPropVariantInPlace,
   getPropsVariations,
 } from "./helpers.mjs";
-import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./paths.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
