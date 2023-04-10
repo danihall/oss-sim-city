@@ -62,7 +62,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   let extended_interface = undefined;
   const fake_props = {};
   const raw_props = {};
-  const test = [];
+  let test = "{";
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -83,16 +83,13 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             }),
           });
 
-          if (component_name === "MessagesPrompter") {
-            console.log(test);
-            const tutu = `{${test.join("").replace(",}", "}").slice(0, -1)}}`;
-            console.log(JSON.parse(tutu));
-          }
-
+          const test_object = test.slice(0, -1).replace(",}", "}") + "}";
+          console.log(JSON.parse(test_object));
           break parent_loop;
         }
 
         //console.log(content_as_array[j]);
+        /*
         const _split = (string) => {
           let line = string
             .replace(/\?|\s/g, "")
@@ -102,7 +99,26 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
           return line;
         };
-        test.push(_split(content_as_array[j]));
+        */
+
+        if (component_name === "Message") {
+          const _replacer = (match, c1, c2, c3) => {
+            if (c1) {
+              return "";
+            }
+            if (c2) {
+              return ",";
+            }
+            if (c3) {
+              return `"${match}"`;
+            }
+          };
+          //test.push(_split(content_as_array[j]));
+          test += content_as_array[j].replace(
+            /(\?|\s)|(;)|([\w]|\[\])+/g,
+            _replacer
+          );
+        }
 
         /*
         const [prop_key, prop_type, fake_type] = getKeyAndFakeType(

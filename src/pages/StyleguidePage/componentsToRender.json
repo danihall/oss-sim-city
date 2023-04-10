@@ -1,16 +1,16 @@
 {
-  "MessagesPrompter": {
+  "Message": {
     "info": {
-      "interface_name": "IMessagesPrompterProps",
+      "interface_name": "IMessageProps",
       "props": null
     },
     "fake_props": [
       {}
     ]
   },
-  "Message": {
+  "MessagesPrompter": {
     "info": {
-      "interface_name": "IMessageProps",
+      "interface_name": "IMessagesPrompterProps",
       "props": null
     },
     "fake_props": [
