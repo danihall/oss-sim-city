@@ -83,7 +83,8 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             }),
           });
 
-          if (component_name === "Message") {
+          if (component_name === "MessagesPrompter") {
+            console.log(test);
             const tutu = `{${test.join("").replace(",}", "}").slice(0, -1)}}`;
             console.log(JSON.parse(tutu));
           }
@@ -96,7 +97,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           let line = string
             .replace(/\?|\s/g, "")
             .replace(";", ",")
-            .replace(/[\w]+/g, '"$&"')
+            .replace(/(?:[\w]|\[\])+/g, '"$&"')
             .trim();
 
           return line;
