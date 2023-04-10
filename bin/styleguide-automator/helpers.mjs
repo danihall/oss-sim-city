@@ -4,7 +4,7 @@ import path from "node:path";
 import {
   COMPONENTS_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-  IGNORE_REGEX,
+  IGNORE_ALL_BUT_REGEX,
 } from "./getConfig.mjs";
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
@@ -16,7 +16,7 @@ const STRINGS_SEPARATOR = " | ";
 const BOOLEANS = [true, false];
 
 const foldersToIgnore = (folder) => {
-  return !IGNORE_REGEX.test(folder);
+  return !IGNORE_ALL_BUT_REGEX.test(folder);
 };
 
 /**

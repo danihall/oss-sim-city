@@ -62,6 +62,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   let extended_interface = undefined;
   const fake_props = {};
   const raw_props = {};
+  const test = [];
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -82,9 +83,27 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             }),
           });
 
+          if (component_name === "Message") {
+            const tutu = `{${test.join("").replace(",}", "}").slice(0, -1)}}`;
+            console.log(JSON.parse(tutu));
+          }
+
           break parent_loop;
         }
 
+        //console.log(content_as_array[j]);
+        const _split = (string) => {
+          let line = string
+            .replace(/\?|\s/g, "")
+            .replace(";", ",")
+            .replace(/[\w]+/g, '"$&"')
+            .trim();
+
+          return line;
+        };
+        test.push(_split(content_as_array[j]));
+
+        /*
         const [prop_key, prop_type, fake_type] = getKeyAndFakeType(
           content_as_array[j]
         );
@@ -96,7 +115,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
         raw_props[prop_key] = prop_type;
 
-        /** Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time */
+        // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
         Object.defineProperty(fake_props, prop_key, {
           enumerable: true,
           get: () =>
@@ -104,6 +123,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
               ? SOURCE_OF_TRUTH[fake_type]()
               : _getFakeValueFromUserType(fake_type),
         });
+        */
       }
     }
   }
@@ -155,7 +175,7 @@ const main = async () => {
   const component_folders = await fs.promises
     .readdir(COMPONENTS_PATH)
     .then((folders) => folders.filter(foldersToIgnore));
-  console.log(component_folders);
+
   const components_name_and_path = await Promise.all(
     component_folders.map(getComponentNameAndPath)
   ).then((result) => result.flat());
