@@ -3,6 +3,7 @@ import process from "node:process";
 
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
 import {
+  foldersToIgnore,
   createExportStatement,
   getComponentNameAndPath,
   getKeyAndFakeType,
@@ -151,7 +152,10 @@ const _createStyleguideDirectory = () => {
  */
 const main = async () => {
   const t1 = performance.now();
-  const component_folders = await fs.promises.readdir(COMPONENTS_PATH);
+  const component_folders = await fs.promises
+    .readdir(COMPONENTS_PATH)
+    .then((folders) => folders.filter(foldersToIgnore));
+  console.log(component_folders);
   const components_name_and_path = await Promise.all(
     component_folders.map(getComponentNameAndPath)
   ).then((result) => result.flat());

@@ -5,11 +5,12 @@ import process from "node:process";
 import { printInvalidConfig } from "./printProcess.mjs";
 
 const default_config = {
+  ignore: null,
   components_path: "src/components",
   styleguide_path: "src/pages/StyleguidePage",
 };
 
-const { components_path, styleguide_path } = await import(
+const { components_path, styleguide_path, ignore } = await import(
   "../../package.json"
 ).then((json) => ({
   ...default_config,
@@ -32,5 +33,12 @@ const PATH_FROM_STYLEGUIDE_TO_COMPONENTS = path.relative(
   STYLEGUIDE_PATH,
   COMPONENTS_PATH
 );
+const IGNORE_REGEX =
+  ignore.length && new RegExp(`^(?:(?!${ignore.join("|")}).)*$`);
 
-export { COMPONENTS_PATH, STYLEGUIDE_PATH, PATH_FROM_STYLEGUIDE_TO_COMPONENTS };
+export {
+  COMPONENTS_PATH,
+  STYLEGUIDE_PATH,
+  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
+  IGNORE_REGEX,
+};
