@@ -14,6 +14,8 @@ import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
+const REGEX_SANITIZE_PROPS = /(\?|\s)|(;)|([\w]|\[\])+/g;
+const REGEX_END_OBJECT = /,}/g;
 const HINT_EXTENDS = " extends ";
 const HINT_INTERFACE_END = "}";
 const HINT_ARRAY = "[]";
@@ -44,6 +46,24 @@ const _getFakeValueFromUserType = function (prop_type) {
   return fake_value;
 };
 
+const PROPS_TO_JSON_MAP = {
+  "?": "",
+  " ": "",
+  ";": ",",
+};
+
+/**
+ * @param {string} match
+ * @returns {string}
+ */
+const _replacer = (match) => {
+  return PROPS_TO_JSON_MAP[match] ?? `"${match}"`;
+};
+
+const _reviver = function (key, value) {
+  console.log(key, value);
+};
+
 /**
  * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
  * Getters and functions are added to SOURCE_OF_TRUTH object.
@@ -60,9 +80,9 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
   let interface_name = undefined;
   let extended_interface = undefined;
+  let props_as_text = "";
   const fake_props = {};
   const raw_props = {};
-  let test = "{";
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -83,42 +103,18 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             }),
           });
 
-          const test_object = test.slice(0, -1).replace(",}", "}") + "}";
-          console.log(JSON.parse(test_object));
+          const sanitized_props_as_text = `{${props_as_text
+            .slice(0, -1)
+            .replace(REGEX_END_OBJECT, HINT_INTERFACE_END)}}`;
+          const props_as_object = JSON.parse(sanitized_props_as_text, _reviver);
+
           break parent_loop;
         }
 
-        //console.log(content_as_array[j]);
-        /*
-        const _split = (string) => {
-          let line = string
-            .replace(/\?|\s/g, "")
-            .replace(";", ",")
-            .replace(/(?:[\w]|\[\])+/g, '"$&"')
-            .trim();
-
-          return line;
-        };
-        */
-
-        if (component_name === "Message") {
-          const _replacer = (match, c1, c2, c3) => {
-            if (c1) {
-              return "";
-            }
-            if (c2) {
-              return ",";
-            }
-            if (c3) {
-              return `"${match}"`;
-            }
-          };
-          //test.push(_split(content_as_array[j]));
-          test += content_as_array[j].replace(
-            /(\?|\s)|(;)|([\w]|\[\])+/g,
-            _replacer
-          );
-        }
+        props_as_text += content_as_array[j].replace(
+          REGEX_SANITIZE_PROPS,
+          _replacer
+        );
 
         /*
         const [prop_key, prop_type, fake_type] = getKeyAndFakeType(
