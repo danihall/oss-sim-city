@@ -9,14 +9,17 @@ import {
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
 const TSX = ".tsx";
-const QUESTION_MARK = "?";
-const REGEX_TYPE_USELESS_CHAR = /;|"/g;
+const REGEX_USELESS_CHAR = /\s|;|"/g;
 const REGEX_PROP_VARIANT = /([A-Za-z]*\s\|\s[A-Za-z]*)*/g;
+const HINT_FUNCTION = "=>";
 const STRINGS_SEPARATOR = " | ";
 const BOOLEANS = [true, false];
+const function_prop_detected = [];
+
+const getFunctionPropsList = () => function_prop_detected;
 
 const foldersToIgnore = (folder) => {
-  return !IGNORE_ALL_BUT_REGEX.test(folder);
+  return IGNORE_ALL_BUT_REGEX ? !IGNORE_ALL_BUT_REGEX.test(folder) : folder;
 };
 
 /**
@@ -99,18 +102,25 @@ const _getSuffixForString = (prop_key) => {
 
 /**
  * @param {string} string
- * @returns {array}
+ * @returns {object}
  */
 const getKeyAndFakeType = (string) => {
-  let [prop_key, prop_type] = string.split(":");
-  prop_key = prop_key.replace(QUESTION_MARK, "").trim();
-  prop_type = prop_type.replace(REGEX_TYPE_USELESS_CHAR, "").trim();
+  if (string.includes(HINT_FUNCTION)) {
+    function_prop_detected.push(string);
+    return { function_detected: true };
+  }
+
+  const [prop_key, prop_type] = string
+    .replace(REGEX_USELESS_CHAR, "")
+    .trim()
+    .split(":");
+
   const fake_type =
     prop_type === "string"
       ? `${prop_type}${_getSuffixForString(prop_key)}`
       : prop_type;
 
-  return [prop_key, prop_type, fake_type];
+  return { prop_key, prop_type, fake_type };
 };
 
 /**
@@ -169,6 +179,7 @@ const getPropsVariations = (accumulated_props, [prop_name, prop_value]) => {
 };
 
 export {
+  getFunctionPropsList,
   foldersToIgnore,
   createExportStatement,
   getComponentNameAndPath,

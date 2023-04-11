@@ -3,6 +3,7 @@ import process from "node:process";
 
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
 import {
+  getFunctionPropsList,
   foldersToIgnore,
   createExportStatement,
   getComponentNameAndPath,
@@ -14,13 +15,11 @@ import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const REGEX_SANITIZE_PROPS = /(\?|\s)|(;})|(;)|([\w]|\[\])+/g;
+const OPENING_BRACKET = "{";
+const CLOSING_BRACKET = "}";
+const QUESTION_MARK = "?";
 const HINT_EXTENDS = " extends ";
-const HINT_INTERFACE_END = "}";
 const HINT_ARRAY = "[]";
-const HINT_FUNCTION = "=>";
-
-let function_prop_detected = [];
 
 /**
  * It's here that fake props value are set, derived from their documented type ("string", "number", a custom Interface, etc).
@@ -45,35 +44,8 @@ const _getFakeValueFromUserType = function (prop_type) {
   return fake_value;
 };
 
-const PROPS_TO_JSON_MAP = {
-  "?": "",
-  " ": "",
-  ";": ",",
-  ";}": "}",
-};
-
-/**
- * @param {string} match
- * @returns {string}
- */
-const _replacer = (match) => {
-  return PROPS_TO_JSON_MAP[match] ?? `"${match}"`;
-};
-
-const _reviver = function (key, value) {
-  if (typeof value === "object") {
-    return value;
-  }
-
-  Object.defineProperty(this, key, {
-    configurable: false,
-    enumerable: true,
-    get() {
-      return value in SOURCE_OF_TRUTH
-        ? SOURCE_OF_TRUTH[value]()
-        : _getFakeValueFromUserType(value);
-    },
-  });
+const _getContext = function () {
+  return this;
 };
 
 /**
@@ -92,8 +64,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
   let interface_name = undefined;
   let extended_interface = undefined;
-  let props_as_text = "";
-  const fake_props = {};
   const raw_props = {};
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
@@ -102,33 +72,52 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       .split(HINT_EXTENDS);
 
     if (interface_match) {
+      const fake_props = {};
+      let context = fake_props;
       interface_name = interface_match[0];
       extended_interface = interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
-        if (content_as_array[j] === HINT_INTERFACE_END) {
-          const props_as_text_sanitized = `{${props_as_text}}`.replace(
-            REGEX_SANITIZE_PROPS,
-            _replacer
-          );
-          const props_as_object = JSON.parse(props_as_text_sanitized, _reviver);
-          /** Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time */
+        if (content_as_array[j] === CLOSING_BRACKET && context === fake_props) {
+          // Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
             value: () => ({
               ...SOURCE_OF_TRUTH[extended_interface]?.(),
-              ...props_as_object,
+              ...fake_props,
             }),
           });
 
           break parent_loop;
         }
 
-        if (content_as_array[j].includes(HINT_FUNCTION)) {
-          function_prop_detected.push(content_as_array[j]);
+        const { prop_key, prop_type, fake_type, function_detected } =
+          getKeyAndFakeType(content_as_array[j]);
+
+        if (function_detected) {
           continue;
         }
 
-        props_as_text += content_as_array[j].trim();
+        if (prop_type === OPENING_BRACKET) {
+          context[prop_key] = {
+            _getParentContext: _getContext.bind(context),
+          };
+          context = context[prop_key];
+          continue;
+        }
+
+        if (prop_key === CLOSING_BRACKET) {
+          context = context._getParentContext();
+          continue;
+        }
+
+        // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
+        Object.defineProperty(context, prop_key, {
+          enumerable: true,
+          get: () =>
+            fake_type in SOURCE_OF_TRUTH
+              ? SOURCE_OF_TRUTH[fake_type]()
+              : _getFakeValueFromUserType(fake_type),
+        });
       }
     }
   }
@@ -207,7 +196,7 @@ const main = async () => {
       printProcessSuccess(
         performance.now() - t1,
         components_name_and_path,
-        function_prop_detected
+        getFunctionPropsList()
       );
     })
     .catch((reason) => {

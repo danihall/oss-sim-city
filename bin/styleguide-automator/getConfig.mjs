@@ -5,7 +5,7 @@ import process from "node:process";
 import { printInvalidConfig } from "./printProcess.mjs";
 
 const default_config = {
-  ignore_all_but: null,
+  ignore_all_but: [],
   components_path: "src/components",
   styleguide_path: "src/pages/StyleguidePage",
 };

@@ -6,6 +6,9 @@ interface IMessageProps {
     is_urgent: boolean;
     infos: {
       list: string[];
+      test: {
+        deep: number;
+      };
     };
   };
   text: string;
