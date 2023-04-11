@@ -14,8 +14,7 @@ import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const REGEX_SANITIZE_PROPS = /(\?|\s)|(;)|([\w]|\[\])+/g;
-const REGEX_END_OBJECT = /,}/g;
+const REGEX_SANITIZE_PROPS = /(\?|\s)|(;})|(;)|([\w]|\[\])+/g;
 const HINT_EXTENDS = " extends ";
 const HINT_INTERFACE_END = "}";
 const HINT_ARRAY = "[]";
@@ -50,6 +49,7 @@ const PROPS_TO_JSON_MAP = {
   "?": "",
   " ": "",
   ";": ",",
+  ";}": "}",
 };
 
 /**
@@ -61,7 +61,19 @@ const _replacer = (match) => {
 };
 
 const _reviver = function (key, value) {
-  console.log(key, value);
+  if (typeof value === "object") {
+    return value;
+  }
+
+  Object.defineProperty(this, key, {
+    configurable: false,
+    enumerable: true,
+    get() {
+      return value in SOURCE_OF_TRUTH
+        ? SOURCE_OF_TRUTH[value]()
+        : _getFakeValueFromUserType(value);
+    },
+  });
 };
 
 /**
@@ -95,48 +107,28 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === HINT_INTERFACE_END) {
+          const props_as_text_sanitized = `{${props_as_text}}`.replace(
+            REGEX_SANITIZE_PROPS,
+            _replacer
+          );
+          const props_as_object = JSON.parse(props_as_text_sanitized, _reviver);
           /** Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time */
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
             value: () => ({
               ...SOURCE_OF_TRUTH[extended_interface]?.(),
-              ...fake_props,
+              ...props_as_object,
             }),
           });
-
-          const sanitized_props_as_text = `{${props_as_text
-            .slice(0, -1)
-            .replace(REGEX_END_OBJECT, HINT_INTERFACE_END)}}`;
-          const props_as_object = JSON.parse(sanitized_props_as_text, _reviver);
 
           break parent_loop;
         }
 
-        props_as_text += content_as_array[j].replace(
-          REGEX_SANITIZE_PROPS,
-          _replacer
-        );
-
-        /*
-        const [prop_key, prop_type, fake_type] = getKeyAndFakeType(
-          content_as_array[j]
-        );
-
-        if (fake_type.includes(HINT_FUNCTION)) {
-          function_prop_detected.push(`${prop_key}: ${fake_type}`);
+        if (content_as_array[j].includes(HINT_FUNCTION)) {
+          function_prop_detected.push(content_as_array[j]);
           continue;
         }
 
-        raw_props[prop_key] = prop_type;
-
-        // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
-        Object.defineProperty(fake_props, prop_key, {
-          enumerable: true,
-          get: () =>
-            fake_type in SOURCE_OF_TRUTH
-              ? SOURCE_OF_TRUTH[fake_type]()
-              : _getFakeValueFromUserType(fake_type),
-        });
-        */
+        props_as_text += content_as_array[j].trim();
       }
     }
   }

@@ -4,6 +4,9 @@ interface IMessageProps {
   link?: {
     to: string;
     is_urgent: boolean;
+    infos: {
+      list: string[];
+    };
   };
   text: string;
 }
