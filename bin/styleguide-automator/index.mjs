@@ -7,7 +7,7 @@ import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const REGEX_OBJECT = /([\w]|\[\]|\.|\?)+|(;)/g;
+const REGEX_OBJECT = /(\w+\s\|\s|\w|\[\]|\.|\?)+|(;)/g;
 const CLOSING_BRACKET = "}";
 const NOTHING = "";
 const COMMA = ",";
@@ -38,6 +38,12 @@ const _getFakeValueFromUserType = function (prop_type) {
   return fake_value;
 };
 
+/**
+ * @param {string} match
+ * @param {string} capture_word
+ * @param  {...any} rest
+ * @returns {string}
+ */
 const _replacer = (match, capture_word, ...rest) => {
   if (capture_word) {
     return `"${match}"`;
@@ -48,6 +54,21 @@ const _replacer = (match, capture_word, ...rest) => {
   return following_char === CLOSING_BRACKET || !following_char
     ? NOTHING
     : COMMA;
+};
+
+const _reviver = function (key, value) {
+  /*
+  const fake_type =
+
+  Object.defineProperty(this, key, {
+    get() {
+      return fake_type in SOURCE_OF_TRUTH
+      ? SOURCE_OF_TRUTH[fake_type]()
+      : _getFakeValueFromUserType(fake_type)
+    }
+  })
+  */
+  return value;
 };
 
 /**
@@ -84,7 +105,9 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             .join("")
             .replace(REGEX_OBJECT, _replacer);
 
-          const fake_props = JSON.parse(`{${fake_props_as_string}}`);
+          const raw_props = JSON.parse(`{${fake_props_as_string}}`);
+          const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
+          console.log(fake_props);
 
           // Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {

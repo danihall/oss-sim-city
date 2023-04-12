@@ -5,6 +5,12 @@
     },
     "fake_props": null
   },
+  "Nav": {
+    "info": {
+      "props": ""
+    },
+    "fake_props": null
+  },
   "MessagesPrompter": {
     "info": {
       "interface_name": "IMessagesPrompterProps",
@@ -15,12 +21,6 @@
         "messages": "IMessageProps[]"
       }
     ]
-  },
-  "Nav": {
-    "info": {
-      "props": ""
-    },
-    "fake_props": null
   },
   "TextBlock": {
     "info": {
@@ -54,12 +54,6 @@
       }
     ]
   },
-  "Toolbar": {
-    "info": {
-      "props": ""
-    },
-    "fake_props": null
-  },
   "ToolInput": {
     "info": {
       "interface_name": "IToolInputProps",
@@ -72,6 +66,12 @@
         "img_path": "string"
       }
     ]
+  },
+  "Toolbar": {
+    "info": {
+      "props": ""
+    },
+    "fake_props": null
   },
   "ToolbarDropdown": {
     "info": {
