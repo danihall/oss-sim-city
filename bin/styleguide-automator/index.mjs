@@ -2,21 +2,15 @@ import fs from "node:fs";
 import process from "node:process";
 
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
-import {
-  getFunctionPropsList,
-  foldersToIgnore,
-  createExportStatement,
-  getComponentNameAndPath,
-  getKeyAndFakeType,
-  addPropVariantInPlace,
-  getPropsVariations,
-} from "./helpers.mjs";
+import * as Helpers from "./helpers.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const OPENING_BRACKET = "{";
+const REGEX_OBJECT = /([\w]|\[\]|\.|\?)+|(;)/g;
 const CLOSING_BRACKET = "}";
+const NOTHING = "";
+const COMMA = ",";
 const QUESTION_MARK = "?";
 const HINT_EXTENDS = " extends ";
 const HINT_ARRAY = "[]";
@@ -44,8 +38,16 @@ const _getFakeValueFromUserType = function (prop_type) {
   return fake_value;
 };
 
-const _getContext = function () {
-  return this;
+const _replacer = (match, capture_word, ...rest) => {
+  if (capture_word) {
+    return `"${match}"`;
+  }
+
+  const [, offset, string] = rest;
+  const following_char = string[offset + 1];
+  return following_char === CLOSING_BRACKET || !following_char
+    ? NOTHING
+    : COMMA;
 };
 
 /**
@@ -64,7 +66,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
   let interface_name = undefined;
   let extended_interface = undefined;
-  const raw_props = {};
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -72,13 +73,19 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       .split(HINT_EXTENDS);
 
     if (interface_match) {
-      const fake_props = {};
-      let context = fake_props;
+      //const fake_props = {};
+      const interface_as_array = [];
       interface_name = interface_match[0];
       extended_interface = interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
-        if (content_as_array[j] === CLOSING_BRACKET && context === fake_props) {
+        if (content_as_array[j] === CLOSING_BRACKET) {
+          const fake_props_as_string = interface_as_array
+            .join("")
+            .replace(REGEX_OBJECT, _replacer);
+
+          const fake_props = JSON.parse(`{${fake_props_as_string}}`);
+
           // Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
             value: () => ({
@@ -90,26 +97,9 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           break parent_loop;
         }
 
-        const { prop_key, prop_type, fake_type, function_detected } =
-          getKeyAndFakeType(content_as_array[j]);
+        interface_as_array.push(content_as_array[j].trim());
 
-        if (function_detected) {
-          continue;
-        }
-
-        if (prop_type === OPENING_BRACKET) {
-          context[prop_key] = {
-            _getParentContext: _getContext.bind(context),
-          };
-          context = context[prop_key];
-          continue;
-        }
-
-        if (prop_key === CLOSING_BRACKET) {
-          context = context._getParentContext();
-          continue;
-        }
-
+        /*
         // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
         Object.defineProperty(context, prop_key, {
           enumerable: true,
@@ -118,33 +108,51 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
               ? SOURCE_OF_TRUTH[fake_type]()
               : _getFakeValueFromUserType(fake_type),
         });
+        */
       }
     }
   }
 
   Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
     enumerable: true,
-    get: () => ({
-      info: {
-        interface_name,
-        props: Object.keys(raw_props).length ? { ...raw_props } : null,
-      },
-      get fake_props() {
-        if (!(interface_name in SOURCE_OF_TRUTH)) {
-          return null;
-        }
+    get() {
+      return {
+        get info() {
+          const root_context = this;// eslint-disable-line
+          return {
+            interface_name,
+            get props() {
+              return "";
+              /*
+              return root_context.fake_props
+                ? Object.fromEntries(
+                    Object.entries(root_context.fake_props[0]).map(_mapToTypeOf)
+                  )
+                : null;
+                */
+            },
+          };
+        },
+        get fake_props() {
+          if (!(interface_name in SOURCE_OF_TRUTH)) {
+            return null;
+          }
 
-        const fake_props = SOURCE_OF_TRUTH[interface_name]();
-        const fake_props_variations = Object.entries(fake_props).reduce(
-          getPropsVariations,
-          []
-        );
+          const fake_props = SOURCE_OF_TRUTH[interface_name]();
+          const fake_props_variations = Object.entries(fake_props).reduce(
+            Helpers.getPropsVariations,
+            []
+          );
 
-        return fake_props_variations.length
-          ? fake_props_variations.map(addPropVariantInPlace, fake_props)
-          : [fake_props];
-      },
-    }),
+          return fake_props_variations.length
+            ? fake_props_variations.map(
+                Helpers.addPropVariantInPlace,
+                fake_props
+              )
+            : [fake_props];
+        },
+      };
+    },
   });
 };
 
@@ -168,14 +176,14 @@ const main = async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises
     .readdir(COMPONENTS_PATH)
-    .then((folders) => folders.filter(foldersToIgnore));
+    .then((folders) => folders.filter(Helpers.foldersToIgnore));
 
   const components_name_and_path = await Promise.all(
-    component_folders.map(getComponentNameAndPath)
+    component_folders.map(Helpers.getComponentNameAndPath)
   ).then((result) => result.flat());
 
   const components_export_statements = components_name_and_path
-    .map(createExportStatement)
+    .map(Helpers.createExportStatement)
     .join("");
 
   Promise.all(components_name_and_path.map(_updateSourceOfTruth))
@@ -196,7 +204,7 @@ const main = async () => {
       printProcessSuccess(
         performance.now() - t1,
         components_name_and_path,
-        getFunctionPropsList()
+        Helpers.getFunctionPropsList()
       );
     })
     .catch((reason) => {
