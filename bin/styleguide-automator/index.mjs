@@ -19,8 +19,6 @@ const REGEX_DISJUNCTION = /"|\s/g;
 const CLOSING_BRACKET = "}";
 const NOTHING = "";
 const COMMA = ",";
-const SEPARATOR = " | ";
-const QUESTION_MARK = "?";
 const HINT_EXTENDS = " extends ";
 const HINT_ARRAY = "[]";
 
@@ -69,10 +67,7 @@ const _replacer = (
   }
 
   if (capture_array) {
-    if (match.includes('"')) {
-      throw `Listing string type with other types is forbidden! ${match}`;
-    }
-    const item = `"${match.slice(0, -2).replace(/\(|\)/)}"`; //removes the "[" and "]" at ed of string
+    const item = `"${match.slice(0, -2).replaceAll('"', "'")}"`;
     return `[${new Array(5).fill(item).join(COMMA)}]`;
   }
 
@@ -83,7 +78,22 @@ const _replacer = (
     : COMMA;
 };
 
+/**
+ * Sometimes, variations of values must be generated for the same key,
+ * each time this is the case, an other object must be created.
+ * There are 3 cases that need variation:
+ * @variation key?
+ * Means the key refers to an optional prop. So an other object without this particular prop must be created.
+ * @variation value1|value2|value3...
+ * Means the prop is one of the listed values. An object for each possible value must be created.
+ * @variation boolean
+ * The prop is a boolean, must create an object representing the opposite value.
+ * @param {string} key
+ * @param {string} value
+ * @returns {undefined}
+ */
 const _reviver = function (key, value) {
+  console.log(this, { key, value });
   /*
   const fake_type =
 
@@ -127,7 +137,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSING_BRACKET) {
-          console.log("joined  ", interface_as_array.join(""));
           const fake_props_as_string = interface_as_array
             .join("")
             .replace(REGEX_KEY_VALUE, _replacer);

@@ -17,22 +17,22 @@
       "interface_name": "IMessagesPrompterProps",
       "raw_props": {
         "messages": [
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)"
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)"
         ]
       }
     },
     "fake_props": [
       {
         "messages": [
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)",
-          "undefinedIMessageProps | IMessageAsLinkProps)"
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)",
+          "(IMessageProps | IMessageAsLinkProps)"
         ]
       }
     ]
