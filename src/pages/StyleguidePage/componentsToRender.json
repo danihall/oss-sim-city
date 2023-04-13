@@ -3,31 +3,11 @@
     "info": {
       "interface_name": "IMessageProps",
       "raw_props": {
-        "link?": {
-          "to": "string",
-          "is_urgent": "boolean",
-          "infos": {
-            "list": "string[]",
-            "test": {
-              "deep": "number"
-            }
-          }
-        },
         "text": "string"
       }
     },
     "fake_props": [
       {
-        "link?": {
-          "to": "string",
-          "is_urgent": "boolean",
-          "infos": {
-            "list": "string[]",
-            "test": {
-              "deep": "number"
-            }
-          }
-        },
         "text": "string"
       }
     ]
@@ -36,58 +16,46 @@
     "info": {
       "interface_name": "IMessagesPrompterProps",
       "raw_props": {
-        "messages": "IMessageProps[]"
+        "messages": [
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)"
+        ]
       }
     },
     "fake_props": [
       {
-        "messages": "IMessageProps[]"
+        "messages": [
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)",
+          "undefinedIMessageProps | IMessageAsLinkProps)"
+        ]
       }
     ]
   },
-  "TextBlock": {
+  "MessageAsLink": {
     "info": {
-      "interface_name": "ITextBlockProps",
+      "interface_name": "IMessageAsLinkProps",
       "raw_props": {
-        "children": "React.ReactNode"
+        "to": "string",
+        "is_urgent?": "boolean",
+        "test?": {
+          "truc": "prout|sisi|la|famille"
+        }
       }
     },
     "fake_props": [
       {
-        "children": "React.ReactNode"
-      }
-    ]
-  },
-  "ToolInput": {
-    "info": {
-      "interface_name": "IToolInputProps",
-      "raw_props": {
-        "id": "string",
         "text": "string",
-        "img_path": "string"
-      }
-    },
-    "fake_props": [
-      {
-        "id": "string",
-        "text": "string",
-        "img_path": "string"
-      }
-    ]
-  },
-  "ToolbarDropdown": {
-    "info": {
-      "interface_name": "IToolbarDropdownProps",
-      "raw_props": {
-        "children_inputs": "IToolInputProps[]"
-      }
-    },
-    "fake_props": [
-      {
-        "id": "string",
-        "text": "string",
-        "img_path": "string",
-        "children_inputs": "IToolInputProps[]"
+        "to": "string",
+        "is_urgent?": "boolean",
+        "test?": {
+          "truc": "prout|sisi|la|famille"
+        }
       }
     ]
   }

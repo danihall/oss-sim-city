@@ -9,14 +9,17 @@ import {
   getPropsVariations,
   addPropVariantInPlace,
 } from "./getPropsVariations.mjs";
-import * as Helpers from "./helpers.mjs";
+import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const REGEX_OBJECT = /(\w+\s\|\s|\w|\[\]|\.|\?)+|(;)/g;
+const REGEX_KEY_VALUE =
+  /((?<=:\s)[^;]+\[\])|((?:\s(?:\w|")+\s\|)+\s(?:\w|")+)|(\w|"|\?)+|(;)/g;
+const REGEX_DISJUNCTION = /"|\s/g;
 const CLOSING_BRACKET = "}";
 const NOTHING = "";
 const COMMA = ",";
+const SEPARATOR = " | ";
 const QUESTION_MARK = "?";
 const HINT_EXTENDS = " extends ";
 const HINT_ARRAY = "[]";
@@ -46,16 +49,34 @@ const _getFakeValueFromUserType = function (prop_type) {
 
 /**
  * @param {string} match
- * @param {string} capture_word
+ * @param {string} capture_array any-chars[]
+ * @param {string} capture_disjunction any-chars | any-chars | any-chars
+ * @param {string} capture_word any-chars
+ * @param {string} _capture_semicolon ;
  * @param  {...any} rest
  * @returns {string}
  */
-const _replacer = (match, capture_word, ...rest) => {
-  if (capture_word) {
-    return `"${match}"`;
+const _replacer = (
+  match,
+  capture_array,
+  capture_disjunction,
+  capture_word,
+  _capture_semicolon,
+  ...rest
+) => {
+  if (capture_word || capture_disjunction) {
+    return `"${match.replace(REGEX_DISJUNCTION, NOTHING)}"`;
   }
 
-  const [, offset, string] = rest;
+  if (capture_array) {
+    if (match.includes('"')) {
+      throw `Listing string type with other types is forbidden! ${match}`;
+    }
+    const item = `"${match.slice(0, -2).replace(/\(|\)/)}"`; //removes the "[" and "]" at ed of string
+    return `[${new Array(5).fill(item).join(COMMA)}]`;
+  }
+
+  const [offset, string] = rest;
   const following_char = string[offset + 1];
   return following_char === CLOSING_BRACKET || !following_char
     ? NOTHING
@@ -106,13 +127,13 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSING_BRACKET) {
+          console.log("joined  ", interface_as_array.join(""));
           const fake_props_as_string = interface_as_array
             .join("")
-            .replace(REGEX_OBJECT, _replacer);
+            .replace(REGEX_KEY_VALUE, _replacer);
 
           const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
-          console.log(fake_props);
 
           /**
            * Adds a function in SOURCE_OF_TRUTH for the interface that will be called automatically at JSON.stringify time.
@@ -195,7 +216,7 @@ const main = async () => {
   const t1 = performance.now();
   const component_folders = await fs.promises
     .readdir(COMPONENTS_PATH)
-    .then((folders) => folders.filter(Helpers.foldersToIgnore));
+    .then((folders) => folders.filter(foldersToIgnore));
 
   const components_name_and_path = await Promise.all(
     component_folders.map(getComponentNameAndPath)
@@ -223,7 +244,7 @@ const main = async () => {
       printProcessSuccess(
         performance.now() - t1,
         components_name_and_path,
-        Helpers.getFunctionPropsList()
+        getFunctionPropsList()
       );
     })
     .catch((reason) => {

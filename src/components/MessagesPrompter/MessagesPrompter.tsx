@@ -1,15 +1,20 @@
 import { IMessageProps, Message } from "./Message";
+import { IMessageAsLinkProps, MessageAsLink } from "./MessageAsLink";
 import css from "./MessagesPrompter.module.scss";
 
 interface IMessagesPrompterProps {
-  messages: IMessageProps[];
+  messages: (IMessageProps | IMessageAsLinkProps)[];
 }
 
 const MessagesPrompter = ({ messages }: IMessagesPrompterProps) => {
   return (
     <div>
-      {messages.map(({ link, text }) => {
-        return <Message link={link} text={text} />;
+      {messages.map((message_props) => {
+        return "to" in message_props ? (
+          <MessageAsLink {...message_props} />
+        ) : (
+          <Message {...message_props} />
+        );
       })}
     </div>
   );

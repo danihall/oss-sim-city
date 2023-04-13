@@ -14,18 +14,13 @@ const getFunctionPropsList = () => function_prop_detected;
  * @param {string} folder
  * @returns {boolean}
  */
-const foldersToIgnore = (folder) => {
-  console.log(folder, FOLDERS_TO_PARSE_REGEX);
-  return FOLDERS_TO_PARSE_REGEX.test(folder);
-};
+const foldersToIgnore = (folder) => FOLDERS_TO_PARSE_REGEX.test(folder);
 
 /**
  * @param {array} entry
  * @returns {boolean}
  */
-const _isTruthyValue = function ([, value]) {
-  return Boolean(value);
-};
+const _isTruthyValue = ([, value]) => Boolean(value);
 
 /**
  * @param {string} prop_key
