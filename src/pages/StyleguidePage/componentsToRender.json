@@ -1,42 +1,20 @@
 {
-  "DayNightToggler": {
-    "info": {
-      "props": ""
-    },
-    "fake_props": null
-  },
-  "Nav": {
-    "info": {
-      "props": ""
-    },
-    "fake_props": null
-  },
-  "MessagesPrompter": {
-    "info": {
-      "interface_name": "IMessagesPrompterProps",
-      "props": ""
-    },
-    "fake_props": [
-      {
-        "messages": "IMessageProps[]"
-      }
-    ]
-  },
-  "TextBlock": {
-    "info": {
-      "interface_name": "ITextBlockProps",
-      "props": ""
-    },
-    "fake_props": [
-      {
-        "children": "React.ReactNode"
-      }
-    ]
-  },
   "Message": {
     "info": {
       "interface_name": "IMessageProps",
-      "props": ""
+      "raw_props": {
+        "link?": {
+          "to": "string",
+          "is_urgent": "boolean",
+          "infos": {
+            "list": "string[]",
+            "test": {
+              "deep": "number"
+            }
+          }
+        },
+        "text": "string"
+      }
     },
     "fake_props": [
       {
@@ -54,10 +32,40 @@
       }
     ]
   },
+  "MessagesPrompter": {
+    "info": {
+      "interface_name": "IMessagesPrompterProps",
+      "raw_props": {
+        "messages": "IMessageProps[]"
+      }
+    },
+    "fake_props": [
+      {
+        "messages": "IMessageProps[]"
+      }
+    ]
+  },
+  "TextBlock": {
+    "info": {
+      "interface_name": "ITextBlockProps",
+      "raw_props": {
+        "children": "React.ReactNode"
+      }
+    },
+    "fake_props": [
+      {
+        "children": "React.ReactNode"
+      }
+    ]
+  },
   "ToolInput": {
     "info": {
       "interface_name": "IToolInputProps",
-      "props": ""
+      "raw_props": {
+        "id": "string",
+        "text": "string",
+        "img_path": "string"
+      }
     },
     "fake_props": [
       {
@@ -67,16 +75,12 @@
       }
     ]
   },
-  "Toolbar": {
-    "info": {
-      "props": ""
-    },
-    "fake_props": null
-  },
   "ToolbarDropdown": {
     "info": {
       "interface_name": "IToolbarDropdownProps",
-      "props": ""
+      "raw_props": {
+        "children_inputs": "IToolInputProps[]"
+      }
     },
     "fake_props": [
       {

@@ -94,7 +94,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       .split(HINT_EXTENDS);
 
     if (interface_match) {
-      //const fake_props = {};
       const interface_as_array = [];
       interface_name = interface_match[0];
       extended_interface = interface_match.length > 1 && interface_match[1];
@@ -109,12 +108,45 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
           console.log(fake_props);
 
-          // Adds a function in SOURCE_OF_TRUTH that will be called automatically at JSON.stringify time
+          /**
+           * Adds a function in SOURCE_OF_TRUTH for the interface that will be called automatically at JSON.stringify time.
+           * This interface is separated from the component so it can be accessed by other components.
+           */
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
             value: () => ({
               ...SOURCE_OF_TRUTH[extended_interface]?.(),
               ...fake_props,
             }),
+          });
+
+          // Adds the final infos and fake props (generated from the interface) of the component.
+          Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
+            enumerable: true,
+            get() {
+              return {
+                info: {
+                  interface_name,
+                  raw_props,
+                },
+                get fake_props() {
+                  if (!(interface_name in SOURCE_OF_TRUTH)) {
+                    return null;
+                  }
+
+                  const fake_props = SOURCE_OF_TRUTH[interface_name]();
+                  const fake_props_variations = Object.entries(
+                    fake_props
+                  ).reduce(Helpers.getPropsVariations, []);
+
+                  return fake_props_variations.length
+                    ? fake_props_variations.map(
+                        Helpers.addPropVariantInPlace,
+                        fake_props
+                      )
+                    : [fake_props];
+                },
+              };
+            },
           });
 
           break parent_loop;
@@ -135,48 +167,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       }
     }
   }
-
-  Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
-    enumerable: true,
-    get() {
-      return {
-        get info() {
-          const root_context = this;// eslint-disable-line
-          return {
-            interface_name,
-            get props() {
-              return "";
-              /*
-              return root_context.fake_props
-                ? Object.fromEntries(
-                    Object.entries(root_context.fake_props[0]).map(_mapToTypeOf)
-                  )
-                : null;
-                */
-            },
-          };
-        },
-        get fake_props() {
-          if (!(interface_name in SOURCE_OF_TRUTH)) {
-            return null;
-          }
-
-          const fake_props = SOURCE_OF_TRUTH[interface_name]();
-          const fake_props_variations = Object.entries(fake_props).reduce(
-            Helpers.getPropsVariations,
-            []
-          );
-
-          return fake_props_variations.length
-            ? fake_props_variations.map(
-                Helpers.addPropVariantInPlace,
-                fake_props
-              )
-            : [fake_props];
-        },
-      };
-    },
-  });
 };
 
 /**
