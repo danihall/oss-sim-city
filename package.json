@@ -33,7 +33,7 @@
   "styleguide-automator": {
     "components_path": "src/components",
     "styleguide_path": "src/pages/StyleguidePage",
-    "ignore_all_but": ["Message"]
+    "folders_to_parse": ["MessagesPrompter"]
   },
   "eslintConfig": {
     "extends": [

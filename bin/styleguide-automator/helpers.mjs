@@ -1,5 +1,5 @@
-import { IGNORE_ALL_BUT_REGEX } from "./getConfig.mjs";
-import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
+import { REGEX_STRING_FLAVOUR } from "./_sourceOfTruth.mjs";
+import { FOLDERS_TO_PARSE_REGEX } from "./getConfig.mjs";
 
 const REGEX_USELESS_CHAR = /\s|;|"/g;
 const HINT_FUNCTION = "=>";
@@ -15,7 +15,8 @@ const getFunctionPropsList = () => function_prop_detected;
  * @returns {boolean}
  */
 const foldersToIgnore = (folder) => {
-  return !IGNORE_ALL_BUT_REGEX.test(folder);
+  console.log(folder, FOLDERS_TO_PARSE_REGEX);
+  return FOLDERS_TO_PARSE_REGEX.test(folder);
 };
 
 /**

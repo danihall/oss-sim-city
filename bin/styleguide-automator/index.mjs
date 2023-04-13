@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import process from "node:process";
 
+import { SOURCE_OF_TRUTH } from "./_sourceOfTruth.mjs";
 import { createExportStatement } from "./createExportStatement.mjs";
 import { getComponentNameAndPath } from "./getComponentNamesAndPath.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
@@ -10,7 +11,6 @@ import {
 } from "./getPropsVariations.mjs";
 import * as Helpers from "./helpers.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
-import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const REGEX_OBJECT = /(\w+\s\|\s|\w|\[\]|\.|\?)+|(;)/g;

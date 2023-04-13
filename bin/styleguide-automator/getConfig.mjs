@@ -5,12 +5,12 @@ import process from "node:process";
 import { printInvalidConfig } from "./printProcess.mjs";
 
 const default_config = {
-  ignore_all_but: [],
+  folders_to_parse: [".+"],
   components_path: "src/components",
   styleguide_path: "src/pages/StyleguidePage",
 };
 
-const { components_path, styleguide_path, ignore_all_but } = await import(
+const { components_path, styleguide_path, folders_to_parse } = await import(
   "../../package.json"
 ).then((json) => ({
   ...default_config,
@@ -24,30 +24,23 @@ const { components_path, styleguide_path, ignore_all_but } = await import(
 const _getAbsolutePath = (relative_path) =>
   fs.promises.access(relative_path).then(() => path.resolve(relative_path));
 
-/**
- * @returns {Promise}
- */
 const effective_paths = await Promise.all(
   [components_path, styleguide_path].map(_getAbsolutePath)
 ).catch((reason) => void (printInvalidConfig(reason), process.exit(1)));
 
+// constants to export
 const [COMPONENTS_PATH, STYLEGUIDE_PATH] = effective_paths;
-
 const PATH_FROM_STYLEGUIDE_TO_COMPONENTS = path.relative(
   STYLEGUIDE_PATH,
   COMPONENTS_PATH
 );
-
-const IGNORE_ALL_BUT_REGEX = new RegExp(
-  `^(?:(?!${ignore_all_but.join("|")}).)*$`
-);
-
+const FOLDERS_TO_PARSE_REGEX = new RegExp(`^${folders_to_parse.join("|")}$`);
 const TSX = ".tsx";
 
 export {
   COMPONENTS_PATH,
   STYLEGUIDE_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-  IGNORE_ALL_BUT_REGEX,
+  FOLDERS_TO_PARSE_REGEX,
   TSX,
 };
