@@ -1,83 +1,21 @@
-import fs from "node:fs";
-import path from "node:path";
-
-import {
-  COMPONENTS_PATH,
-  PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-  IGNORE_ALL_BUT_REGEX,
-} from "./getConfig.mjs";
+import { IGNORE_ALL_BUT_REGEX } from "./getConfig.mjs";
 import { REGEX_STRING_FLAVOUR } from "./sourceOfTruth.mjs";
 
-const TSX = ".tsx";
 const REGEX_USELESS_CHAR = /\s|;|"/g;
-const REGEX_PROP_VARIANT = /([A-Za-z]*\s\|\s[A-Za-z]*)*/g;
 const HINT_FUNCTION = "=>";
-const STRINGS_SEPARATOR = " | ";
-const BOOLEANS = [true, false];
 const function_prop_detected = [];
 
+/**
+ * @returns {array}
+ */
 const getFunctionPropsList = () => function_prop_detected;
 
-const foldersToIgnore = (folder) => {
-  return IGNORE_ALL_BUT_REGEX ? !IGNORE_ALL_BUT_REGEX.test(folder) : folder;
-};
-
 /**
- * @param {TemplateStringsArray} static_chunks
- * @param  {Array} rest
- * @returns {string}
- */
-const _template = (static_chunks, ...rest) => {
-  const string_as_array = [];
-
-  for (let i = 0; i < static_chunks.length; i++) {
-    string_as_array.push(static_chunks[i] + (rest[i] ?? ""));
-  }
-
-  return string_as_array.join("");
-};
-
-/**
- * @param {string} params.component_name
- * @param {string} params.path
- * @returns {string}
- */
-const createExportStatement = ({ component_name, path }) => {
-  const sanitized_path = path.replace(TSX, "");
-  return _template`export {${component_name}} from "${sanitized_path.replace(
-    COMPONENTS_PATH,
-    PATH_FROM_STYLEGUIDE_TO_COMPONENTS
-  )}";`;
-};
-
-/**
- * @param {string} file
+ * @param {string} folder
  * @returns {boolean}
  */
-const _makeComponentNameandPathObject = (accumulated_files, file) => {
-  if (path.extname(file) !== TSX) {
-    return accumulated_files;
-  }
-  const folder_path = accumulated_files[0];
-
-  return [
-    ...accumulated_files,
-    { component_name: file.replace(TSX, ""), path: `${folder_path}/${file}` },
-  ];
-};
-
-/**
- * @param {string} component_folder
- * @returns {Promise} array
- */
-const getComponentNameAndPath = async (component_folder) => {
-  const folder_path = `${COMPONENTS_PATH}/${component_folder}`;
-  const files = await fs.promises.readdir(folder_path);
-  const effective_files = files.reduce(_makeComponentNameandPathObject, [
-    folder_path,
-  ]);
-
-  return effective_files.slice(1);
+const foldersToIgnore = (folder) => {
+  return !IGNORE_ALL_BUT_REGEX.test(folder);
 };
 
 /**
@@ -123,67 +61,4 @@ const getKeyAndFakeType = (string) => {
   return { prop_key, prop_type, fake_type };
 };
 
-/**
- * @param {object} entry
- * @this {object} other entry at same index
- * @returns {object}
- */
-const addPropVariantInPlace = function (entry) {
-  return { ...this, ...entry }; // order is important, entry must override this.
-};
-
-/**
- * @param {string | boolean} variant
- * @this {string} prop_name
- * @returns {object}
- */
-const _createPropVariant = function (variant) {
-  return { [this]: variant };
-};
-
-/**
- * @param {array} accumulated_props
- * @param {array} entry: prop_name, prop_value
- * @returns {array}
- */
-const getPropsVariations = (accumulated_props, [prop_name, prop_value]) => {
-  switch (typeof prop_value) {
-    case "string": {
-      const prop_to_vary = prop_value.match(REGEX_PROP_VARIANT)?.[0];
-
-      if (prop_to_vary) {
-        const splitted = prop_to_vary.split(STRINGS_SEPARATOR);
-        const first_variant = { [prop_name]: splitted[0] };
-
-        return [
-          ...accumulated_props.map(addPropVariantInPlace, first_variant),
-          ...splitted.map(_createPropVariant, prop_name),
-        ];
-      }
-      return accumulated_props;
-    }
-    case "boolean": {
-      const booleans = BOOLEANS.map(_createPropVariant, prop_name);
-
-      if (accumulated_props.length) {
-        return [
-          ...accumulated_props,
-          ...booleans.map(addPropVariantInPlace, accumulated_props[0]),
-        ];
-      }
-      return [...booleans];
-    }
-    default:
-      return accumulated_props;
-  }
-};
-
-export {
-  getFunctionPropsList,
-  foldersToIgnore,
-  createExportStatement,
-  getComponentNameAndPath,
-  getKeyAndFakeType,
-  addPropVariantInPlace,
-  getPropsVariations,
-};
+export { getFunctionPropsList, foldersToIgnore, getKeyAndFakeType };

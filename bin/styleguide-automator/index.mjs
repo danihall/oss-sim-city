@@ -1,7 +1,13 @@
 import fs from "node:fs";
 import process from "node:process";
 
+import { createExportStatement } from "./createExportStatement.mjs";
+import { getComponentNameAndPath } from "./getComponentNamesAndPath.mjs";
 import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
+import {
+  getPropsVariations,
+  addPropVariantInPlace,
+} from "./getPropsVariations.mjs";
 import * as Helpers from "./helpers.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { SOURCE_OF_TRUTH } from "./sourceOfTruth.mjs";
@@ -136,11 +142,11 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
                   const fake_props = SOURCE_OF_TRUTH[interface_name]();
                   const fake_props_variations = Object.entries(
                     fake_props
-                  ).reduce(Helpers.getPropsVariations, []);
+                  ).reduce(getPropsVariations, []);
 
                   return fake_props_variations.length
                     ? fake_props_variations.map(
-                        Helpers.addPropVariantInPlace,
+                        addPropVariantInPlace,
                         fake_props
                       )
                     : [fake_props];
@@ -192,11 +198,11 @@ const main = async () => {
     .then((folders) => folders.filter(Helpers.foldersToIgnore));
 
   const components_name_and_path = await Promise.all(
-    component_folders.map(Helpers.getComponentNameAndPath)
+    component_folders.map(getComponentNameAndPath)
   ).then((result) => result.flat());
 
   const components_export_statements = components_name_and_path
-    .map(Helpers.createExportStatement)
+    .map(createExportStatement)
     .join("");
 
   Promise.all(components_name_and_path.map(_updateSourceOfTruth))

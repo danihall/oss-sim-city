@@ -1,4 +1,17 @@
 {
+  "MessagesPrompter": {
+    "info": {
+      "interface_name": "IMessagesPrompterProps",
+      "raw_props": {
+        "messages": "IMessageProps[]"
+      }
+    },
+    "fake_props": [
+      {
+        "messages": "IMessageProps[]"
+      }
+    ]
+  },
   "Message": {
     "info": {
       "interface_name": "IMessageProps",
@@ -29,19 +42,6 @@
           }
         },
         "text": "string"
-      }
-    ]
-  },
-  "MessagesPrompter": {
-    "info": {
-      "interface_name": "IMessagesPrompterProps",
-      "raw_props": {
-        "messages": "IMessageProps[]"
-      }
-    },
-    "fake_props": [
-      {
-        "messages": "IMessageProps[]"
       }
     ]
   },
