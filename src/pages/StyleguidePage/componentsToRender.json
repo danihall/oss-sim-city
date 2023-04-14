@@ -18,11 +18,12 @@
       "raw_props": {
         "to": "string",
         "test?": {
-          "truc": " prout | sisi | la | famille",
+          "truc": "prout|sisi|la|famille",
           "deep": {
             "deep_key": "boolean"
           }
         },
+        "machin": "number",
         "is_urgent?": "boolean"
       }
     },
@@ -31,11 +32,12 @@
         "text": "string",
         "to": "string",
         "test?": {
-          "truc": " prout | sisi | la | famille",
+          "truc": "prout|sisi|la|famille",
           "deep": {
             "deep_key": "boolean"
           }
         },
+        "machin": "number",
         "is_urgent?": "boolean"
       }
     ]
@@ -45,22 +47,22 @@
       "interface_name": "IMessagesPrompterProps",
       "raw_props": {
         "messages": [
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)"
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)"
         ]
       }
     },
     "fake_props": [
       {
         "messages": [
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)",
-          "(IMessageProps | IMessageAsLinkProps)"
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)",
+          "(IMessageProps|IMessageAsLinkProps)"
         ]
       }
     ]

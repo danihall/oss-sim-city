@@ -15,10 +15,12 @@ import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 
 const REGEX_KEY_VALUE =
-  /((?<=:\s)[^;]+\[\])|((?:\s(?:\w|")+\s\|)+\s(?:\w|")+)|(\w|"|\?)+|(;\s*)|(\s+)/g;
+  /((?<=:)[^;]+\[\])|((?:(?:\w|")+\|)+(?:\w|")+)|(\w|"|\?)+|(;)/g;
 const REGEX_SPACE = /\s/g;
 const REGEX_DBL_DISJUNCTION = /"/g;
-const CLOSING_BRACKET = "}";
+const CLOSE_BRACKET = "}";
+const OPEN_BRACKET = "{";
+const SEMICOLON = ";";
 const NOTHING = "";
 const COMMA = ",";
 const HINT_EXTENDS = " extends ";
@@ -52,8 +54,7 @@ const _getFakeValueFromUserType = function (prop_type) {
  * @param {string} capture_array any-chars[]
  * @param {string} capture_disjunction any-chars | any-chars | any-chars
  * @param {string} capture_word any-chars
- * @param {string} capture_semicolon ;
- * @param {string} _capture_space
+ * @param {string} _capture_semicolon ;
  * @param  {...any} rest
  * @returns {string}
  */
@@ -62,8 +63,7 @@ const _replacer = (
   capture_array,
   capture_disjunction,
   capture_word,
-  capture_semicolon,
-  _capture_space,
+  _capture_semicolon,
   ...rest
 ) => {
   if (capture_word || capture_disjunction) {
@@ -75,15 +75,9 @@ const _replacer = (
     return `[${new Array(5).fill(item).join(COMMA)}]`;
   }
 
-  if (capture_semicolon) {
-    const [offset, string] = rest;
-    const following_char = string[offset + match.length];
-    return following_char === CLOSING_BRACKET || !following_char
-      ? NOTHING
-      : COMMA;
-  }
-
-  return NOTHING;
+  const [offset, string] = rest;
+  const following_char = string[offset + match.length];
+  return following_char === CLOSE_BRACKET || !following_char ? NOTHING : COMMA;
 };
 
 /**
@@ -101,7 +95,6 @@ const _replacer = (
  * @returns {undefined}
  */
 const _reviver = function (key, value) {
-  //console.log(this, { key, value });
   /*
   const fake_type =
 
@@ -114,6 +107,27 @@ const _reviver = function (key, value) {
   })
   */
   return value;
+};
+
+const _mergeChunksAsKeyValuePair = (
+  accumulated_chunks,
+  current_chunk,
+  index,
+  array
+) => {
+  const previousChunk = accumulated_chunks.at(-1);
+
+  if (!previousChunk) {
+    return [current_chunk];
+  }
+
+  const open_brackets_count = previousChunk.match(/{/g)?.length;
+  const close_brackets_count = previousChunk.match(/}/g)?.length;
+
+  if (open_brackets_count === close_brackets_count) {
+    return [...accumulated_chunks, current_chunk];
+  }
+  return [...accumulated_chunks.slice(0, -1), previousChunk + current_chunk];
 };
 
 /**
@@ -144,13 +158,14 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       extended_interface = interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
-        if (content_as_array[j] === CLOSING_BRACKET) {
+        if (content_as_array[j] === CLOSE_BRACKET) {
           console.log(interface_as_array);
+          console.log(
+            interface_as_array.reduce(_mergeChunksAsKeyValuePair, [])
+          );
           const fake_props_as_string = interface_as_array
             .join("")
             .replace(REGEX_KEY_VALUE, _replacer);
-
-          console.log(fake_props_as_string);
 
           const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
@@ -199,7 +214,9 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           break parent_loop;
         }
 
-        interface_as_array.push(content_as_array[j]);
+        interface_as_array.push(
+          content_as_array[j].replace(REGEX_SPACE, NOTHING)
+        );
 
         /*
         // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time

@@ -9,6 +9,7 @@ interface IMessageAsLinkProps extends IMessageProps {
       deep_key: boolean;
     };
   };
+  machin: number;
   is_urgent?: boolean;
 }
 
