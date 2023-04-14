@@ -19,8 +19,6 @@ const REGEX_KEY_VALUE =
 const REGEX_SPACE = /\s/g;
 const REGEX_DBL_DISJUNCTION = /"/g;
 const CLOSE_BRACKET = "}";
-const OPEN_BRACKET = "{";
-const SEMICOLON = ";";
 const NOTHING = "";
 const COMMA = ",";
 const HINT_EXTENDS = " extends ";
@@ -112,15 +110,13 @@ const _reviver = function (key, value) {
 const _mergeChunksAsKeyValuePair = (
   accumulated_chunks,
   current_chunk,
-  index,
-  array
+  index
 ) => {
-  const previousChunk = accumulated_chunks.at(-1);
-
-  if (!previousChunk) {
+  if (index === 0) {
     return [current_chunk];
   }
 
+  const previousChunk = accumulated_chunks.at(-1);
   const open_brackets_count = previousChunk.match(/{/g)?.length;
   const close_brackets_count = previousChunk.match(/}/g)?.length;
 
@@ -159,7 +155,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
-          console.log(interface_as_array);
           console.log(
             interface_as_array.reduce(_mergeChunksAsKeyValuePair, [])
           );
