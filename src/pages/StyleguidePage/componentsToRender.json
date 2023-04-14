@@ -12,6 +12,34 @@
       }
     ]
   },
+  "MessageAsLink": {
+    "info": {
+      "interface_name": "IMessageAsLinkProps",
+      "raw_props": {
+        "to": "string",
+        "test?": {
+          "truc": " prout | sisi | la | famille",
+          "deep": {
+            "deep_key": "boolean"
+          }
+        },
+        "is_urgent?": "boolean"
+      }
+    },
+    "fake_props": [
+      {
+        "text": "string",
+        "to": "string",
+        "test?": {
+          "truc": " prout | sisi | la | famille",
+          "deep": {
+            "deep_key": "boolean"
+          }
+        },
+        "is_urgent?": "boolean"
+      }
+    ]
+  },
   "MessagesPrompter": {
     "info": {
       "interface_name": "IMessagesPrompterProps",
@@ -34,28 +62,6 @@
           "(IMessageProps | IMessageAsLinkProps)",
           "(IMessageProps | IMessageAsLinkProps)"
         ]
-      }
-    ]
-  },
-  "MessageAsLink": {
-    "info": {
-      "interface_name": "IMessageAsLinkProps",
-      "raw_props": {
-        "to": "string",
-        "is_urgent?": "boolean",
-        "test?": {
-          "truc": "prout|sisi|la|famille"
-        }
-      }
-    },
-    "fake_props": [
-      {
-        "text": "string",
-        "to": "string",
-        "is_urgent?": "boolean",
-        "test?": {
-          "truc": "prout|sisi|la|famille"
-        }
       }
     ]
   }

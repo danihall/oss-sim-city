@@ -57,4 +57,4 @@ const getKeyAndFakeType = (string) => {
   return { prop_key, prop_type, fake_type };
 };
 
-export { getFunctionPropsList, foldersToIgnore, getKeyAndFakeType };
+export { getFunctionPropsList, foldersToIgnore };

@@ -3,10 +3,13 @@ import css from "./Message.module.scss";
 
 interface IMessageAsLinkProps extends IMessageProps {
   to: string;
-  is_urgent?: boolean;
   test?: {
     truc: "prout" | "sisi" | "la" | "famille";
+    deep: {
+      deep_key: boolean;
+    };
   };
+  is_urgent?: boolean;
 }
 
 const MessageAsLink = ({

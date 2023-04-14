@@ -6,26 +6,17 @@ import { ToolInput, IToolInputProps } from "./ToolInput";
 const Toolbar = () => {
   return (
     <menu className={css["toolbar"]}>
-      {data.map((entry: IToolInputProps | IToolbarDropdownProps) => {
-        if ("children_inputs" in entry) {
+      {data.map((props: IToolInputProps | IToolbarDropdownProps) => {
+        if ("children_inputs" in props) {
           return (
-            <li key={entry.id}>
-              <ToolbarDropdown
-                id={entry.id}
-                text={entry.text}
-                img_path={entry.img_path}
-                children_inputs={entry.children_inputs}
-              />
+            <li key={props.id}>
+              <ToolbarDropdown {...props} />
             </li>
           );
         }
         return (
-          <li key={entry.id}>
-            <ToolInput
-              id={entry.id}
-              text={entry.text}
-              img_path={entry.img_path}
-            />
+          <li key={props.id}>
+            <ToolInput {...props} />
           </li>
         );
       })}

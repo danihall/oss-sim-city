@@ -13,9 +13,11 @@ import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
+
 const REGEX_KEY_VALUE =
-  /((?<=:\s)[^;]+\[\])|((?:\s(?:\w|")+\s\|)+\s(?:\w|")+)|(\w|"|\?)+|(;)/g;
-const REGEX_DISJUNCTION = /"|\s/g;
+  /((?<=:\s)[^;]+\[\])|((?:\s(?:\w|")+\s\|)+\s(?:\w|")+)|(\w|"|\?)+|(;\s*)|(\s+)/g;
+const REGEX_SPACE = /\s/g;
+const REGEX_DBL_DISJUNCTION = /"/g;
 const CLOSING_BRACKET = "}";
 const NOTHING = "";
 const COMMA = ",";
@@ -50,7 +52,8 @@ const _getFakeValueFromUserType = function (prop_type) {
  * @param {string} capture_array any-chars[]
  * @param {string} capture_disjunction any-chars | any-chars | any-chars
  * @param {string} capture_word any-chars
- * @param {string} _capture_semicolon ;
+ * @param {string} capture_semicolon ;
+ * @param {string} _capture_space
  * @param  {...any} rest
  * @returns {string}
  */
@@ -59,11 +62,12 @@ const _replacer = (
   capture_array,
   capture_disjunction,
   capture_word,
-  _capture_semicolon,
+  capture_semicolon,
+  _capture_space,
   ...rest
 ) => {
   if (capture_word || capture_disjunction) {
-    return `"${match.replace(REGEX_DISJUNCTION, NOTHING)}"`;
+    return `"${match.replace(REGEX_DBL_DISJUNCTION, NOTHING)}"`;
   }
 
   if (capture_array) {
@@ -71,29 +75,33 @@ const _replacer = (
     return `[${new Array(5).fill(item).join(COMMA)}]`;
   }
 
-  const [offset, string] = rest;
-  const following_char = string[offset + 1];
-  return following_char === CLOSING_BRACKET || !following_char
-    ? NOTHING
-    : COMMA;
+  if (capture_semicolon) {
+    const [offset, string] = rest;
+    const following_char = string[offset + match.length];
+    return following_char === CLOSING_BRACKET || !following_char
+      ? NOTHING
+      : COMMA;
+  }
+
+  return NOTHING;
 };
 
 /**
  * Sometimes, variations of values must be generated for the same key,
  * each time this is the case, an other object must be created.
  * There are 3 cases that need variation:
- * @variation key?
+ * @case {key?: value}
  * Means the key refers to an optional prop. So an other object without this particular prop must be created.
- * @variation value1|value2|value3...
- * Means the prop is one of the listed values. An object for each possible value must be created.
- * @variation boolean
- * The prop is a boolean, must create an object representing the opposite value.
+ * @case {key: value1|value2|value3...}
+ * Means the value is one of the listed values. An object for each possible value must be created.
+ * @case {key: boolean}
+ * The value is a boolean, must create an object representing the opposite value.
  * @param {string} key
  * @param {string} value
  * @returns {undefined}
  */
 const _reviver = function (key, value) {
-  console.log(this, { key, value });
+  //console.log(this, { key, value });
   /*
   const fake_type =
 
@@ -137,9 +145,12 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSING_BRACKET) {
+          console.log(interface_as_array);
           const fake_props_as_string = interface_as_array
             .join("")
             .replace(REGEX_KEY_VALUE, _replacer);
+
+          console.log(fake_props_as_string);
 
           const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
@@ -188,7 +199,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           break parent_loop;
         }
 
-        interface_as_array.push(content_as_array[j].trim());
+        interface_as_array.push(content_as_array[j]);
 
         /*
         // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
