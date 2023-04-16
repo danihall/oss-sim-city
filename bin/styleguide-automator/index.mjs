@@ -21,7 +21,7 @@ const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const REGEX_KEY_VALUE =
   /((?<=:)[^;]+\[\])|((?:(?:\w|")+\|)+(?:\w|")+)|(\w|"|\?)+|(;)/g;
 const REGEX_SPACE = /\s/g;
-const REGEX_DBL_DISJUNCTION = /"/g;
+const REGEX_DBL_QUOTE = /"/g;
 const CLOSE_BRACKET = "}";
 const NOTHING = "";
 const COMMA = ",";
@@ -68,18 +68,17 @@ const _replacer = (
   _capture_semicolon,
   ...rest
 ) => {
-  if (capture_word || capture_disjunction) {
-    return `"${match.replace(REGEX_DBL_DISJUNCTION, NOTHING)}"`;
-  }
-
-  if (capture_array) {
-    return `${match.slice(0, -2)}`;
-    //return `[${new Array(5).fill(item).join(COMMA)}]`;
+  if (capture_word || capture_disjunction || capture_array) {
+    return `"${match.replace(REGEX_DBL_QUOTE, NOTHING)}"`;
   }
 
   const [offset, string] = rest;
   const following_char = string[offset + match.length];
   return following_char === CLOSE_BRACKET || !following_char ? NOTHING : COMMA;
+};
+
+const _makeChunkAsValidJson = (chunk) => {
+  return chunk.replace(REGEX_KEY_VALUE, _replacer);
 };
 
 /**
@@ -120,6 +119,7 @@ const _hasDifferentIndex = function (_, index) {
   return index !== this;
 };
 
+/*
 const _makeInterfaceVariants = (
   accumulated_variants,
   current_chunk,
@@ -168,6 +168,7 @@ const _makeInterfaceVariants = (
     ...(variants_from_value ? variants_from_value : []),
   ];
 };
+*/
 
 /**
  * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
@@ -199,17 +200,38 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
           //console.log({ interface_as_array });
-          const interface_chunks = interface_as_array.reduce(
-            mergeChunksAsKeyValuePair,
-            []
-          );
+          const interface_chunks = interface_as_array
+            .reduce(mergeChunksAsKeyValuePair, [])
+            .map(_makeChunkAsValidJson);
 
           /**
            * @todo feed interface_chunks to an array.reduce. The reducer must use recursion to handle case when prop value is an object
            * This array.reduce will generate variants the interface
            */
-          //const interface_variants = interface_chunks.reduce(_reducer, []);
+          const _splitKeyAndValue = {
+            separator: /:/,
+            [Symbol.split](string) {
+              const effective_separator = this.separator.exec(string).index;
+              if (!effective_separator) {
+                return [string];
+              }
+              return [
+                string.slice(0, effective_separator),
+                string.slice(effective_separator + 1),
+              ];
+            },
+          };
+          const _makeVariants = (acc, cur, cur_index, array) => {
+            const [key, value] = cur.split(_splitKeyAndValue);
 
+            if (value[0] === "{") {
+              return [...acc, `${key}**__**${value}`];
+            }
+
+            return [...acc, `${key}__${value}`];
+          };
+          const test = interface_chunks.reduce(_makeVariants, []);
+          console.log(test);
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
 
