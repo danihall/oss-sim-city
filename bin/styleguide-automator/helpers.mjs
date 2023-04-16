@@ -17,6 +17,31 @@ const getFunctionPropsList = () => function_prop_detected;
 const foldersToIgnore = (folder) => FOLDERS_TO_PARSE_REGEX.test(folder);
 
 /**
+ * @param {array} accumulated_chunks
+ * @param {string} current_chunk
+ * @param {number} index
+ * @returns {array}
+ */
+const mergeChunksAsKeyValuePair = (
+  accumulated_chunks,
+  current_chunk,
+  index
+) => {
+  if (index === 0) {
+    return [current_chunk];
+  }
+
+  const previousChunk = accumulated_chunks.at(-1);
+  const open_brackets_count = previousChunk.match(/{/g)?.length;
+  const close_brackets_count = previousChunk.match(/}/g)?.length;
+
+  if (open_brackets_count === close_brackets_count) {
+    return [...accumulated_chunks, current_chunk];
+  }
+  return [...accumulated_chunks.slice(0, -1), previousChunk + current_chunk];
+};
+
+/**
  * @param {array} entry
  * @returns {boolean}
  */
@@ -57,4 +82,4 @@ const getKeyAndFakeType = (string) => {
   return { prop_key, prop_type, fake_type };
 };
 
-export { getFunctionPropsList, foldersToIgnore };
+export { getFunctionPropsList, foldersToIgnore, mergeChunksAsKeyValuePair };

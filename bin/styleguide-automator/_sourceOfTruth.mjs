@@ -22,7 +22,7 @@ const IMAGES = [
  */
 const SOURCE_OF_TRUTH = {
   boolean() {
-    return true;
+    return this.number() % 2 === 0;
   },
   number() {
     return +performance.now().toString().slice(-5);

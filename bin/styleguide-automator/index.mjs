@@ -9,7 +9,11 @@ import {
   getPropsVariations,
   addPropVariantInPlace,
 } from "./getPropsVariations.mjs";
-import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
+import {
+  getFunctionPropsList,
+  foldersToIgnore,
+  mergeChunksAsKeyValuePair,
+} from "./helpers.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
@@ -69,8 +73,8 @@ const _replacer = (
   }
 
   if (capture_array) {
-    const item = `"${match.slice(0, -2).replaceAll('"', "'")}"`;
-    return `[${new Array(5).fill(item).join(COMMA)}]`;
+    return `${match.slice(0, -2)}`;
+    //return `[${new Array(5).fill(item).join(COMMA)}]`;
   }
 
   const [offset, string] = rest;
@@ -107,23 +111,62 @@ const _reviver = function (key, value) {
   return value;
 };
 
-const _mergeChunksAsKeyValuePair = (
-  accumulated_chunks,
+/**
+ * @param {number} index
+ * @this {number} current_index
+ * @returns {boolean}
+ */
+const _hasDifferentIndex = function (_, index) {
+  return index !== this;
+};
+
+const _makeInterfaceVariants = (
+  accumulated_variants,
   current_chunk,
-  index
+  current_index,
+  array
 ) => {
-  if (index === 0) {
-    return [current_chunk];
+  const [key, value, ...rest] = current_chunk.split(":");
+  const variant_from_key =
+    key.includes("?") &&
+    array.filter(_hasDifferentIndex, current_index).join("");
+  let variants_from_value = undefined;
+
+  if (value === "boolean;") {
+    const [variant_false, variant_true] = [[...array], [...array]];
+    variant_false[current_index] = variant_false[current_index].replace(
+      "boolean",
+      "false"
+    );
+    variant_true[current_index] = variant_true[current_index].replace(
+      "boolean",
+      "true"
+    );
+    variants_from_value = [variant_false.join(""), variant_true.join("")];
   }
 
-  const previousChunk = accumulated_chunks.at(-1);
-  const open_brackets_count = previousChunk.match(/{/g)?.length;
-  const close_brackets_count = previousChunk.match(/}/g)?.length;
-
-  if (open_brackets_count === close_brackets_count) {
-    return [...accumulated_chunks, current_chunk];
+  if (value.includes("|")) {
+    const splitted = value.split("|");
+    variants_from_value = splitted.map((item) => {
+      const variant = [...array];
+      variant[current_index] = variant[current_index].replace(
+        /(?<=:).*;/,
+        item + (item.includes(";") ? "" : ";")
+      );
+      return variant.join("");
+    });
   }
-  return [...accumulated_chunks.slice(0, -1), previousChunk + current_chunk];
+
+  if (rest.length) {
+    const nested_object = current_chunk.match(/(?<={).*(?=})/)[0].split(";");
+    console.log(nested_object);
+  }
+
+  return [
+    ...accumulated_variants,
+    ...(variant_from_key ? [variant_from_key] : []),
+    ...(variants_from_value ? variants_from_value : []),
+  ];
 };
 
 /**
@@ -155,20 +198,26 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
-          console.log(
-            interface_as_array.reduce(_mergeChunksAsKeyValuePair, [])
+          //console.log({ interface_as_array });
+          const interface_chunks = interface_as_array.reduce(
+            mergeChunksAsKeyValuePair,
+            []
           );
-          const fake_props_as_string = interface_as_array
-            .join("")
-            .replace(REGEX_KEY_VALUE, _replacer);
 
-          const raw_props = JSON.parse(`{${fake_props_as_string}}`);
-          const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
+          /**
+           * @todo feed interface_chunks to an array.reduce. The reducer must use recursion to handle case when prop value is an object
+           * This array.reduce will generate variants the interface
+           */
+          //const interface_variants = interface_chunks.reduce(_reducer, []);
+
+          //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
+          //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
 
           /**
            * Adds a function in SOURCE_OF_TRUTH for the interface that will be called automatically at JSON.stringify time.
            * This interface is separated from the component so it can be accessed by other components.
            */
+          /*
           Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
             value: () => ({
               ...SOURCE_OF_TRUTH[extended_interface]?.(),
@@ -205,6 +254,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
               };
             },
           });
+          */
 
           break parent_loop;
         }
