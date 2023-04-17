@@ -5,9 +5,13 @@ interface IMessageAsLinkProps extends IMessageProps {
   to: string;
   test?: {
     truc: "prout" | "sisi" | "la" | "famille";
+    chiffre: 2;
     deep?: {
       deep_key: boolean;
       arr: "sisi"[];
+      deeper: {
+        hell: boolean;
+      };
     };
     interstice: string;
   };

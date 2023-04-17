@@ -9,22 +9,16 @@ import {
   getPropsVariations,
   addPropVariantInPlace,
 } from "./getPropsVariations.mjs";
-import {
-  getFunctionPropsList,
-  foldersToIgnore,
-  mergeChunksAsKeyValuePair,
-} from "./helpers.mjs";
+import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
+import { makeChunkAsValidJson } from "./makeChunkAsValidJson.mjs";
+import { makeVariants } from "./makeInterfaceVariants.mjs";
+import { mergeChunksAsKeyValuePair } from "./mergeChunksAsKeyValuePair.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-
-const REGEX_KEY_VALUE =
-  /((?<=:)[^;]+\[\])|((?:(?:\w|")+\|)+(?:\w|")+)|(\w|"|\?)+|(;)/g;
 const REGEX_SPACE = /\s/g;
-const REGEX_DBL_QUOTE = /"/g;
-const CLOSE_BRACKET = "}";
 const NOTHING = "";
-const COMMA = ",";
+const CLOSE_BRACKET = "}";
 const HINT_EXTENDS = " extends ";
 const HINT_ARRAY = "[]";
 
@@ -49,36 +43,6 @@ const _getFakeValueFromUserType = function (prop_type) {
     fake_value = isNaN(prop_type) ? prop_type : Number(prop_type);
   }
   return fake_value;
-};
-
-/**
- * @param {string} match
- * @param {string} capture_array any-chars[]
- * @param {string} capture_disjunction any-chars | any-chars | any-chars
- * @param {string} capture_word any-chars
- * @param {string} _capture_semicolon ;
- * @param  {...any} rest
- * @returns {string}
- */
-const _replacer = (
-  match,
-  capture_array,
-  capture_disjunction,
-  capture_word,
-  _capture_semicolon,
-  ...rest
-) => {
-  if (capture_word || capture_disjunction || capture_array) {
-    return `"${match.replace(REGEX_DBL_QUOTE, NOTHING)}"`;
-  }
-
-  const [offset, string] = rest;
-  const following_char = string[offset + match.length];
-  return following_char === CLOSE_BRACKET || !following_char ? NOTHING : COMMA;
-};
-
-const _makeChunkAsValidJson = (chunk) => {
-  return chunk.replace(REGEX_KEY_VALUE, _replacer);
 };
 
 /**
@@ -111,66 +75,6 @@ const _reviver = function (key, value) {
 };
 
 /**
- * @param {number} index
- * @this {number} current_index
- * @returns {boolean}
- */
-const _hasDifferentIndex = function (_, index) {
-  return index !== this;
-};
-
-/*
-const _makeInterfaceVariants = (
-  accumulated_variants,
-  current_chunk,
-  current_index,
-  array
-) => {
-  const [key, value, ...rest] = current_chunk.split(":");
-  const variant_from_key =
-    key.includes("?") &&
-    array.filter(_hasDifferentIndex, current_index).join("");
-  let variants_from_value = undefined;
-
-  if (value === "boolean;") {
-    const [variant_false, variant_true] = [[...array], [...array]];
-    variant_false[current_index] = variant_false[current_index].replace(
-      "boolean",
-      "false"
-    );
-    variant_true[current_index] = variant_true[current_index].replace(
-      "boolean",
-      "true"
-    );
-    variants_from_value = [variant_false.join(""), variant_true.join("")];
-  }
-
-  if (value.includes("|")) {
-    const splitted = value.split("|");
-    variants_from_value = splitted.map((item) => {
-      const variant = [...array];
-      variant[current_index] = variant[current_index].replace(
-        /(?<=:).*;/,
-        item + (item.includes(";") ? "" : ";")
-      );
-      return variant.join("");
-    });
-  }
-
-  if (rest.length) {
-    const nested_object = current_chunk.match(/(?<={).*(?=})/)[0].split(";");
-    console.log(nested_object);
-  }
-
-  return [
-    ...accumulated_variants,
-    ...(variant_from_key ? [variant_from_key] : []),
-    ...(variants_from_value ? variants_from_value : []),
-  ];
-};
-*/
-
-/**
  * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions|undefined will then be discarded. (undefined will be discarde when in an object)
@@ -200,38 +104,21 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
           //console.log({ interface_as_array });
+
           const interface_chunks = interface_as_array
             .reduce(mergeChunksAsKeyValuePair, [])
-            .map(_makeChunkAsValidJson);
+            .map(makeChunkAsValidJson);
+          console.log(interface_chunks);
 
           /**
            * @todo feed interface_chunks to an array.reduce. The reducer must use recursion to handle case when prop value is an object
            * This array.reduce will generate variants the interface
            */
-          const _splitKeyAndValue = {
-            separator: /:/,
-            [Symbol.split](string) {
-              const effective_separator = this.separator.exec(string).index;
-              if (!effective_separator) {
-                return [string];
-              }
-              return [
-                string.slice(0, effective_separator),
-                string.slice(effective_separator + 1),
-              ];
-            },
-          };
-          const _makeVariants = (acc, cur, cur_index, array) => {
-            const [key, value] = cur.split(_splitKeyAndValue);
 
-            if (value[0] === "{") {
-              return [...acc, `${key}**__**${value}`];
-            }
-
-            return [...acc, `${key}__${value}`];
-          };
-          const test = interface_chunks.reduce(_makeVariants, []);
-          console.log(test);
+          const test = interface_chunks.reduce(makeVariants, [
+            interface_chunks,
+          ]);
+          //console.log({ test });
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
 

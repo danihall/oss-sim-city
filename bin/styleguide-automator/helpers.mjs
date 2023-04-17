@@ -17,31 +17,6 @@ const getFunctionPropsList = () => function_prop_detected;
 const foldersToIgnore = (folder) => FOLDERS_TO_PARSE_REGEX.test(folder);
 
 /**
- * @param {array} accumulated_chunks
- * @param {string} current_chunk
- * @param {number} index
- * @returns {array}
- */
-const mergeChunksAsKeyValuePair = (
-  accumulated_chunks,
-  current_chunk,
-  index
-) => {
-  if (index === 0) {
-    return [current_chunk];
-  }
-
-  const previousChunk = accumulated_chunks.at(-1);
-  const open_brackets_count = previousChunk.match(/{/g)?.length;
-  const close_brackets_count = previousChunk.match(/}/g)?.length;
-
-  if (open_brackets_count === close_brackets_count) {
-    return [...accumulated_chunks, current_chunk];
-  }
-  return [...accumulated_chunks.slice(0, -1), previousChunk + current_chunk];
-};
-
-/**
  * @param {array} entry
  * @returns {boolean}
  */
@@ -82,4 +57,44 @@ const getKeyAndFakeType = (string) => {
   return { prop_key, prop_type, fake_type };
 };
 
-export { getFunctionPropsList, foldersToIgnore, mergeChunksAsKeyValuePair };
+/**
+ * This custom splitter divides a whole string in two part, even if the separator can be found in multiples places.
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/split
+ */
+const splitKeyAndRestValue = {
+  regex_separator: /:/,
+  /**
+   * @param {string} string
+   * @returns {array}
+   */
+  [Symbol.split](string) {
+    const first_colon = string.search(this.regex_separator);
+
+    if (!first_colon) {
+      return [string];
+    }
+
+    return [string.slice(0, first_colon), string.slice(first_colon + 1)];
+  },
+};
+
+const SplitByCommaAndKeepSeparator = {
+  regex_separator: /,/g,
+  [Symbol.split](string) {
+    const commas = [...string.matchAll(this.regex_separator)];
+    if (!commas.length) {
+      return [string];
+    }
+
+    return commas.map((comma, index, array) => {
+      return string.slice(array[index - 1]?.index + 1 ?? 0, comma.index + 1);
+    });
+  },
+};
+
+export {
+  getFunctionPropsList,
+  foldersToIgnore,
+  splitKeyAndRestValue,
+  SplitByCommaAndKeepSeparator,
+};

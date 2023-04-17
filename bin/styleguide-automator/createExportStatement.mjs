@@ -1,7 +1,7 @@
+import { TSX } from "./constants.mjs";
 import {
   COMPONENTS_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
-  TSX,
 } from "./getConfig.mjs";
 
 /**

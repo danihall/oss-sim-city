@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { COMPONENTS_PATH, TSX } from "./getConfig.mjs";
+import { TSX } from "./constants.mjs";
+import { COMPONENTS_PATH } from "./getConfig.mjs";
 
 /**
  * @param {string} file

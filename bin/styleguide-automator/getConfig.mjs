@@ -28,19 +28,16 @@ const effective_paths = await Promise.all(
   [components_path, styleguide_path].map(_getAbsolutePath)
 ).catch((reason) => void (printInvalidConfig(reason), process.exit(1)));
 
-// constants to export
 const [COMPONENTS_PATH, STYLEGUIDE_PATH] = effective_paths;
 const PATH_FROM_STYLEGUIDE_TO_COMPONENTS = path.relative(
   STYLEGUIDE_PATH,
   COMPONENTS_PATH
 );
 const FOLDERS_TO_PARSE_REGEX = new RegExp(`^${folders_to_parse.join("|")}$`);
-const TSX = ".tsx";
 
 export {
   COMPONENTS_PATH,
   STYLEGUIDE_PATH,
   PATH_FROM_STYLEGUIDE_TO_COMPONENTS,
   FOLDERS_TO_PARSE_REGEX,
-  TSX,
 };
