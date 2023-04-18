@@ -78,8 +78,8 @@ const splitKeyAndRestValue = {
   },
 };
 
-const SplitByCommaAndKeepSeparator = {
-  regex_separator: /,/g,
+const SplitByKeyValuePairs = {
+  regex_separator: /;/g,
   [Symbol.split](string) {
     const commas = [...string.matchAll(this.regex_separator)];
 
@@ -97,5 +97,5 @@ export {
   getFunctionPropsList,
   foldersToIgnore,
   splitKeyAndRestValue,
-  SplitByCommaAndKeepSeparator,
+  SplitByKeyValuePairs,
 };

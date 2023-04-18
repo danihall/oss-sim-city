@@ -1,36 +1,50 @@
 import { groupNestedObjects } from "./groupNestedObjects.mjs";
-import {
-  splitKeyAndRestValue,
-  SplitByCommaAndKeepSeparator,
-} from "./helpers.mjs";
+import { splitKeyAndRestValue, SplitByKeyValuePairs } from "./helpers.mjs";
 
 const OPEN_BRACKET = "{";
 
-const makeVariantsFromValue = (acc, cur, cur_index, base_array) => {
+/**
+ * Recursion used in this function. Hard to follow at a glance,
+ * but recursion is the only way to deal with nested props objects.
+ * Only possible variants of values are created, not ones stemming from a key, eg: "key?: value".
+ * Variants from optional keys are created later when JSON.parsing the arrays created here.
+ * @param {string} acc
+ * @param {string} cur
+ * @param {number} cur_index
+ * @returns {array}
+ */
+const makeVariantsFromValue = (acc, cur, cur_index) => {
   const [key, rest_value] = cur.split(splitKeyAndRestValue);
   const raw_interface = acc[0];
-  const variant_from_optional_key = [];
   const variants_from_value = [];
   let temp = undefined;
 
-  if (key.includes("?")) {
-    variant_from_optional_key.push(
-      raw_interface
-        .slice(0, cur_index)
-        .concat(raw_interface.slice(cur_index + 1))
-    );
-  }
+  if (rest_value.startsWith("{")) {
+    const nested = rest_value
+      .slice(1)
+      .slice(0, -2)
+      .split(SplitByKeyValuePairs)
+      .reduce(groupNestedObjects, []);
+    const nested_variants = nested
+      .reduce(makeVariantsFromValue, [nested])
+      .slice(1);
 
-  if (rest_value === "boolean;") {
+    nested_variants.forEach((nested_variant) => {
+      const variant =
+        ((temp = [...raw_interface]),
+        (temp[cur_index] = `${key}:{${nested_variant};}`),
+        temp);
+
+      variants_from_value.push(variant);
+    });
+  } else if (rest_value === "boolean;") {
     const variant_true =
       ((temp = [...raw_interface]), (temp[cur_index] = `${key}:true;`), temp);
     const variant_false =
       ((temp = [...raw_interface]), (temp[cur_index] = `${key}:false;`), temp);
 
     variants_from_value.push(variant_true, variant_false);
-  }
-
-  if (rest_value.includes("|")) {
+  } else if (rest_value.includes("|")) {
     const values = rest_value.replace(/\(|\)|\[]|;/g, "").split("|");
     values.forEach((value) => {
       const variant =
@@ -40,9 +54,7 @@ const makeVariantsFromValue = (acc, cur, cur_index, base_array) => {
 
       variants_from_value.push(variant);
     });
-  }
-
-  if (rest_value.includes("[]")) {
+  } else if (rest_value.includes("[]")) {
     const item = rest_value.match(/\w+/)?.[0];
     const variant =
       ((temp = [...raw_interface]),
@@ -54,7 +66,7 @@ const makeVariantsFromValue = (acc, cur, cur_index, base_array) => {
     variants_from_value.push(variant);
   }
 
-  return [...acc, ...variant_from_optional_key, ...variants_from_value];
+  return [...acc, ...variants_from_value];
 };
 
 export { makeVariantsFromValue };
