@@ -62,13 +62,13 @@ const getKeyAndFakeType = (string) => {
  * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/split
  */
 const splitKeyAndRestValue = {
-  regex_separator: /:/,
+  separator: ":",
   /**
    * @param {string} string
    * @returns {array}
    */
   [Symbol.split](string) {
-    const first_colon = string.search(this.regex_separator);
+    const first_colon = string.indexOf(this.separator);
 
     if (!first_colon) {
       return [string];
@@ -82,6 +82,7 @@ const SplitByCommaAndKeepSeparator = {
   regex_separator: /,/g,
   [Symbol.split](string) {
     const commas = [...string.matchAll(this.regex_separator)];
+
     if (!commas.length) {
       return [string];
     }

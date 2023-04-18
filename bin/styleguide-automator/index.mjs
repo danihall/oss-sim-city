@@ -9,10 +9,14 @@ import {
   getPropsVariations,
   addPropVariantInPlace,
 } from "./getPropsVariations.mjs";
-import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
+import { groupNestedObjects } from "./groupNestedObjects.mjs";
+import {
+  getFunctionPropsList,
+  foldersToIgnore,
+  splitKeyAndRestValue,
+} from "./helpers.mjs";
 import { makeChunkAsValidJson } from "./makeChunkAsValidJson.mjs";
-import { makeVariants } from "./makeInterfaceVariants.mjs";
-import { mergeChunksAsKeyValuePair } from "./mergeChunksAsKeyValuePair.mjs";
+import { makeVariantsFromValue } from "./makeInterfaceVariants.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
@@ -46,35 +50,6 @@ const _getFakeValueFromUserType = function (prop_type) {
 };
 
 /**
- * Sometimes, variations of values must be generated for the same key,
- * each time this is the case, an other object must be created.
- * There are 3 cases that need variation:
- * @case {key?: value}
- * Means the key refers to an optional prop. So an other object without this particular prop must be created.
- * @case {key: value1|value2|value3...}
- * Means the value is one of the listed values. An object for each possible value must be created.
- * @case {key: boolean}
- * The value is a boolean, must create an object representing the opposite value.
- * @param {string} key
- * @param {string} value
- * @returns {undefined}
- */
-const _reviver = function (key, value) {
-  /*
-  const fake_type =
-
-  Object.defineProperty(this, key, {
-    get() {
-      return fake_type in SOURCE_OF_TRUTH
-      ? SOURCE_OF_TRUTH[fake_type]()
-      : _getFakeValueFromUserType(fake_type)
-    }
-  })
-  */
-  return value;
-};
-
-/**
  * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions|undefined will then be discarded. (undefined will be discarde when in an object)
@@ -105,20 +80,22 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
         if (content_as_array[j] === CLOSE_BRACKET) {
           //console.log({ interface_as_array });
 
-          const interface_chunks = interface_as_array
-            .reduce(mergeChunksAsKeyValuePair, [])
-            .map(makeChunkAsValidJson);
-          console.log(interface_chunks);
+          const interface_chunks = interface_as_array.reduce(
+            groupNestedObjects,
+            []
+          );
 
           /**
            * @todo feed interface_chunks to an array.reduce. The reducer must use recursion to handle case when prop value is an object
            * This array.reduce will generate variants the interface
            */
 
-          const test = interface_chunks.reduce(makeVariants, [
-            interface_chunks,
-          ]);
-          //console.log({ test });
+          const interface_variants = interface_chunks.reduce(
+            makeVariantsFromValue,
+            [interface_chunks]
+          );
+          console.log(interface_variants);
+
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
 
