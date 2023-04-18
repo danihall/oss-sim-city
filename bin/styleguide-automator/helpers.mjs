@@ -57,45 +57,4 @@ const getKeyAndFakeType = (string) => {
   return { prop_key, prop_type, fake_type };
 };
 
-/**
- * This custom splitter divides a whole string in two part, even if the separator can be found in multiples places.
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/split
- */
-const splitKeyAndRestValue = {
-  separator: ":",
-  /**
-   * @param {string} string
-   * @returns {array}
-   */
-  [Symbol.split](string) {
-    const first_colon = string.indexOf(this.separator);
-
-    if (!first_colon) {
-      return [string];
-    }
-
-    return [string.slice(0, first_colon), string.slice(first_colon + 1)];
-  },
-};
-
-const SplitByKeyValuePairs = {
-  regex_separator: /;/g,
-  [Symbol.split](string) {
-    const commas = [...string.matchAll(this.regex_separator)];
-
-    if (!commas.length) {
-      return [string];
-    }
-
-    return commas.map((comma, index, array) => {
-      return string.slice(array[index - 1]?.index + 1 ?? 0, comma.index + 1);
-    });
-  },
-};
-
-export {
-  getFunctionPropsList,
-  foldersToIgnore,
-  splitKeyAndRestValue,
-  SplitByKeyValuePairs,
-};
+export { getFunctionPropsList, foldersToIgnore };
