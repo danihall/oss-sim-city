@@ -10,14 +10,63 @@ import {
   addPropVariantInPlace,
 } from "./getPropsVariations.mjs";
 import { groupNestedObjects } from "./groupNestedObjects.mjs";
-import {
-  getFunctionPropsList,
-  foldersToIgnore,
-  splitKeyAndRestValue,
-} from "./helpers.mjs";
+import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
 import { makeChunkAsValidJson } from "./makeChunkAsValidJson.mjs";
 import { makeVariantsFromValue } from "./makeInterfaceVariants.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
+import { splitKeyAndRestValue } from "./splitKeyAndRestValue.mjs";
+
+const object1 = {
+  a: "boolean",
+  b: "42|'truc'|'42'",
+  c: {
+    deep1: "boolean",
+    deeper: {
+      test: "sisi",
+      even_deeper: {
+        hell: {
+          pauleta: "boolean",
+          getting_dark: {
+            nombre: 24,
+            darker: {
+              liste: "React.ReactElement[]",
+            },
+          },
+        },
+      },
+    },
+  },
+};
+
+const _makeVariants = (acc, cur, cur_index) => {
+  const [key, value] = cur;
+  const raw = acc[0];
+  const variants = [];
+
+  if (typeof value === "object") {
+    const copy = raw[key];
+
+    Object.entries(copy)
+      .reduce(_makeVariants, [copy])
+      .slice(1)
+      .forEach((nested_variant) => {
+        const temp = { ...raw, [key]: nested_variant };
+
+        variants.push(temp);
+      });
+  } else if (value === "boolean") {
+    variants.push({ ...raw, [key]: true }, { ...raw, [key]: false });
+  } else if (value.includes("[]")) {
+    const item = value.replace("[]", "");
+    variants.push({ ...raw, [key]: Array(5).fill(item) });
+  }
+
+  return [...acc, ...variants];
+};
+
+const entries = Object.entries(object1);
+const test = entries.reduce(_makeVariants, [object1]);
+console.log(JSON.stringify(test, null, 2));
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const REGEX_SPACE = /\s/g;
@@ -94,7 +143,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             makeVariantsFromValue,
             [interface_chunks]
           );
-          console.log(interface_variants);
+          //console.log(interface_variants);
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
