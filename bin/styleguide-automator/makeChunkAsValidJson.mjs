@@ -1,6 +1,7 @@
+const REGEX_SPACE = /\s/g;
+const REGEX_CAPTURE_KEY_VALUE =
+  /((?<=:)[^;]+\[\])|((?:(?:\w|"|\d)+\|)+(?:\w|"|\d)+)|((?<=:)\d+)(?=;)|(\w|"|\d|\?)+|(;)/g;
 const REGEX_DBL_QUOTE = /"/g;
-const REGEX_KEY_VALUE =
-  /((?<=:)[^;]+\[\])|((?:(?:\w|")+\|)+(?:\w|")+)|(\w|"|\?)+|(;)/g;
 const NOTHING = "";
 const COMMA = ",";
 const CLOSE_BRACKET = "}";
@@ -14,16 +15,21 @@ const CLOSE_BRACKET = "}";
  * @param  {...any} rest
  * @returns {string}
  */
-const _replacer = (
+const _toValidJson = (
   match,
   capture_array,
   capture_disjunction,
+  capture_digits,
   capture_word,
   _capture_semicolon,
   ...rest
 ) => {
   if (capture_word || capture_disjunction || capture_array) {
-    return `"${match.replace(REGEX_DBL_QUOTE, NOTHING)}"`;
+    return `"${match.replace(REGEX_DBL_QUOTE, "'")}"`;
+  }
+
+  if (capture_digits) {
+    return match;
   }
 
   const [offset, string] = rest;
@@ -31,8 +37,10 @@ const _replacer = (
   return following_char === CLOSE_BRACKET || !following_char ? NOTHING : COMMA;
 };
 
-const makeChunkAsValidJson = (chunk) => {
-  return chunk.replace(REGEX_KEY_VALUE, _replacer);
+const sanitizeToParsableJson = (string) => {
+  return `{${string
+    .replace(REGEX_SPACE, NOTHING)
+    .replace(REGEX_CAPTURE_KEY_VALUE, _toValidJson)}}`;
 };
 
-export { makeChunkAsValidJson };
+export { sanitizeToParsableJson };

@@ -1,5 +1,4 @@
 import { groupNestedObjects } from "./groupNestedObjects.mjs";
-import { splitByKeyValuePairs } from "./splitByKeyValuePairs.mjs";
 import { splitKeyAndRestValue } from "./splitKeyAndRestValue.mjs";
 
 const OPEN_BRACKET = "{";
@@ -71,29 +70,31 @@ const makeVariantsFromValue = (acc, cur, cur_index) => {
 };
 */
 
-const makeVariantsFromValue = (acc, cur, cur_index) => {
+const makeVariantsFromValue = (acc, cur) => {
   const [key, value] = cur;
   const raw_interface = acc[0];
   const variants = [];
 
   if (typeof value === "object") {
-    const copy = raw_interface[key];
-    const _entries = Object.entries(copy);
-    _entries
-      .reduce(makeVariantsFromValue, [copy])
-      .slice(1)
-      .forEach((nested_variant) => {
-        const temp = { ...raw_interface, [key]: nested_variant };
-        variants.push(temp);
+    const nested_object = raw_interface[key];
+
+    Object.entries(nested_object)
+      .reduce(makeVariantsFromValue, [nested_object])
+      .slice(1) // must remove the first item, which is a shallow copy of the parent interface and, as such, a duplicate.
+      .forEach((variant) => {
+        const nested_variant = { ...raw_interface, [key]: variant };
+        variants.push(nested_variant);
       });
   }
 
   if (value === "boolean") {
-    variants.push(
-      { ...raw_interface, [key]: true },
-      { ...raw_interface, [key]: false }
-    );
+    const variant_true = { ...raw_interface, [key]: true };
+    const variant_false = { ...raw_interface, [key]: false };
+
+    variants.push(variant_true, variant_false);
   }
+
+  //if ( value.includes("") )
 
   return [...acc, ...variants];
 };

@@ -11,66 +11,11 @@ import {
 } from "./getPropsVariations.mjs";
 import { groupNestedObjects } from "./groupNestedObjects.mjs";
 import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
-import { makeChunkAsValidJson } from "./makeChunkAsValidJson.mjs";
+import { sanitizeToParsableJson } from "./makeChunkAsValidJson.mjs";
 import { makeVariantsFromValue } from "./makeInterfaceVariants.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
-import { splitKeyAndRestValue } from "./splitKeyAndRestValue.mjs";
-
-const object1 = {
-  a: "boolean",
-  b: "42|'truc'|'42'",
-  c: {
-    deep1: "boolean",
-    deeper: {
-      test: "sisi",
-      even_deeper: {
-        hell: {
-          pauleta: "boolean",
-          getting_dark: {
-            nombre: 24,
-            darker: {
-              liste: "React.ReactElement[]",
-            },
-          },
-        },
-      },
-    },
-  },
-};
-
-const _makeVariants = (acc, cur, cur_index) => {
-  const [key, value] = cur;
-  const raw = acc[0];
-  const variants = [];
-
-  if (typeof value === "object") {
-    const copy = raw[key];
-
-    Object.entries(copy)
-      .reduce(_makeVariants, [copy])
-      .slice(1)
-      .forEach((nested_variant) => {
-        const temp = { ...raw, [key]: nested_variant };
-
-        variants.push(temp);
-      });
-  } else if (value === "boolean") {
-    variants.push({ ...raw, [key]: true }, { ...raw, [key]: false });
-  } else if (value.includes("[]")) {
-    const item = value.replace("[]", "");
-    variants.push({ ...raw, [key]: Array(5).fill(item) });
-  }
-
-  return [...acc, ...variants];
-};
-
-const entries = Object.entries(object1);
-const test = entries.reduce(_makeVariants, [object1]);
-console.log(JSON.stringify(test, null, 2));
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
-const REGEX_SPACE = /\s/g;
-const NOTHING = "";
 const CLOSE_BRACKET = "}";
 const HINT_EXTENDS = " extends ";
 const HINT_ARRAY = "[]";
@@ -121,29 +66,32 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
       .split(HINT_EXTENDS);
 
     if (interface_match) {
-      const interface_as_array = [];
+      let interface_as_string = "";
       interface_name = interface_match[0];
       extended_interface = interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
-          //console.log({ interface_as_array });
+          const raw_interface = JSON.parse(
+            sanitizeToParsableJson(interface_as_string)
+          );
 
+          /*
           const interface_chunks = interface_as_array.reduce(
             groupNestedObjects,
             []
           );
+          */
 
           /**
            * @todo feed interface_chunks to an array.reduce. The reducer must use recursion to handle case when prop value is an object
            * This array.reduce will generate variants the interface
            */
-
-          const interface_variants = interface_chunks.reduce(
+          const interface_variants = Object.entries(raw_interface).reduce(
             makeVariantsFromValue,
-            [interface_chunks]
+            [raw_interface]
           );
-          //console.log(interface_variants);
+          console.log(JSON.stringify(interface_variants, null, 3));
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
@@ -194,9 +142,13 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
           break parent_loop;
         }
 
+        interface_as_string += content_as_array[j];
+
+        /*
         interface_as_array.push(
           content_as_array[j].replace(REGEX_SPACE, NOTHING)
         );
+        */
 
         /*
         // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
