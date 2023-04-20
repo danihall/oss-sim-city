@@ -12,7 +12,7 @@ import {
 import { groupNestedObjects } from "./groupNestedObjects.mjs";
 import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
 import { sanitizeToParsableJson } from "./makeChunkAsValidJson.mjs";
-import { makeVariantsFromValue } from "./makeInterfaceVariants.mjs";
+import { createVariantsFromValue } from "./makeInterfaceVariants.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
@@ -88,10 +88,10 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
            * This array.reduce will generate variants the interface
            */
           const interface_variants = Object.entries(raw_interface).reduce(
-            makeVariantsFromValue,
+            createVariantsFromValue,
             [raw_interface]
           );
-          console.log(JSON.stringify(interface_variants, null, 3));
+          console.log(interface_variants);
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);

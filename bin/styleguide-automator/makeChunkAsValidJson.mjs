@@ -2,6 +2,7 @@ const REGEX_SPACE = /\s/g;
 const REGEX_CAPTURE_KEY_VALUE =
   /((?<=:)[^;]+\[\])|((?:(?:\w|"|\d)+\|)+(?:\w|"|\d)+)|((?<=:)\d+)(?=;)|(\w|"|\d|\?)+|(;)/g;
 const REGEX_DBL_QUOTE = /"/g;
+const SINGLE_QUOTE = "'";
 const NOTHING = "";
 const COMMA = ",";
 const CLOSE_BRACKET = "}";
@@ -25,7 +26,7 @@ const _toValidJson = (
   ...rest
 ) => {
   if (capture_word || capture_disjunction || capture_array) {
-    return `"${match.replace(REGEX_DBL_QUOTE, "'")}"`;
+    return `"${match.replace(REGEX_DBL_QUOTE, SINGLE_QUOTE)}"`;
   }
 
   if (capture_digits) {
