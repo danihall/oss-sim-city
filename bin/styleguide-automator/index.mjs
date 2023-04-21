@@ -3,17 +3,20 @@ import process from "node:process";
 
 import { SOURCE_OF_TRUTH } from "./_sourceOfTruth.mjs";
 import { createExportStatement } from "./createExportStatement.mjs";
-import { createVariantsFromEntryValue } from "./createVariantsFromEntryValue.mjs";
+import {
+  createVariantsFromEntryValue,
+  createVariantsFromOptionalKey,
+} from "./createVariantsFromEntryValue.mjs";
 import { getComponentNameAndPath } from "./getComponentNamesAndPath.mjs";
-import { COMPONENTS_PATH, STYLEGUIDE_PATH } from "./getConfig.mjs";
+import { COMPONENTS_PATH } from "./getConfig.mjs";
 import {
   getPropsVariations,
   addPropVariantInPlace,
 } from "./getPropsVariations.mjs";
-import { groupNestedObjects } from "./groupNestedObjects.mjs";
 import { getFunctionPropsList, foldersToIgnore } from "./helpers.mjs";
-import { sanitizeToParsableJson } from "./makeChunkAsValidJson.mjs";
+import { createStyleguideDirectory } from "./makeStyleguideDirectory.mjs";
 import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
+import { sanitizeToParsableJson } from "./sanitizeToParsableJson.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
 const CLOSE_BRACKET = "}";
@@ -76,22 +79,14 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             sanitizeToParsableJson(interface_as_string)
           );
 
-          /*
-          const interface_chunks = interface_as_array.reduce(
-            groupNestedObjects,
-            []
-          );
-          */
-
-          /**
-           * @todo feed interface_chunks to an array.reduce. The reducer must use recursion to handle case when prop value is an object
-           * This array.reduce will generate variants the interface
-           */
-          const interface_variants = Object.entries(raw_interface).reduce(
+          const interface_value_variants = Object.entries(raw_interface).reduce(
             createVariantsFromEntryValue,
             [raw_interface]
           );
-          console.log(interface_variants);
+          const interface_optional_key_variants = Object.entries(
+            raw_interface
+          ).reduce(createVariantsFromOptionalKey, [raw_interface]);
+          console.log(JSON.stringify(interface_optional_key_variants, null, 3));
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
@@ -166,19 +161,6 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 };
 
 /**
- * @returns {Promise}
- */
-const _createStyleguideDirectory = () => {
-  return fs.promises
-    .mkdir(STYLEGUIDE_PATH)
-    .catch((error) =>
-      error.code === "EEXIST"
-        ? Promise.resolve(error.path)
-        : Promise.reject(error)
-    );
-};
-
-/**
  * @see package.json
  */
 const main = async () => {
@@ -196,7 +178,7 @@ const main = async () => {
     .join("");
 
   Promise.all(components_name_and_path.map(_updateSourceOfTruth))
-    .then(() => _createStyleguideDirectory())
+    .then(() => createStyleguideDirectory())
     .then((styleguide_path) =>
       Promise.all([
         fs.promises.writeFile(

@@ -33,6 +33,7 @@ const _toValidJson = (
     return match;
   }
 
+  /** _capture_semicolon case */
   const [offset, string] = rest;
   const following_char = string[offset + match.length];
   return following_char === CLOSE_BRACKET || !following_char ? NOTHING : COMMA;

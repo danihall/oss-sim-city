@@ -1,6 +1,7 @@
 const BOOLEAN_TYPE = "boolean";
 const NOTHING = "";
 const UNION_OPERATOR = "|";
+const ARRAY_OPERATOR = "[]";
 const REGEX_UNION = /\(|\)|\[\]/g;
 const FALSE_AND_TRUE = [false, true];
 
@@ -24,7 +25,7 @@ const _makeNewVariant = function (variant_value) {
  * @param {array} current_key_value
  * @returns {array | undefined}
  */
-const _getVariants = (raw_interface, current_key_value) => {
+const _getVariantsFromValue = (raw_interface, current_key_value) => {
   const [key, value] = current_key_value;
 
   switch (typeof value) {
@@ -46,9 +47,18 @@ const _getVariants = (raw_interface, current_key_value) => {
           .split(UNION_OPERATOR)
           .map(_makeNewVariant, { raw_interface, key });
       }
+
+      if (value.includes(ARRAY_OPERATOR)) {
+        const item = value.replace(ARRAY_OPERATOR, NOTHING);
+        return [Array(3).fill(item)].map(_makeNewVariant, {
+          raw_interface,
+          key,
+        });
+      }
     }
   }
 };
+
 /**
  * Must use recursion to handle unknowable nested object.
  * @note this function only works if an array of arrays of key-value pairs is fed,
@@ -61,10 +71,65 @@ const _getVariants = (raw_interface, current_key_value) => {
  * @returns {array}
  */
 function createVariantsFromEntryValue(accumulated_variants, current_key_value) {
-  const raw_interface = accumulated_variants[0];
-  const new_variants = _getVariants(raw_interface, current_key_value) ?? [];
+  const raw_interface = accumulated_variants.at(-1);
+  const variants_from_value =
+    _getVariantsFromValue(raw_interface, current_key_value) ?? [];
 
-  return [...accumulated_variants, ...new_variants];
+  return [...accumulated_variants, ...variants_from_value];
 }
 
-export { createVariantsFromEntryValue };
+const _getVariantsFromOptionalKey = (raw_interface, current_key_value) => {
+  const [key, value] = current_key_value;
+
+  if (typeof value === "object") {
+    const nested_object = raw_interface[key];
+    const nested_optional_keys = Object.entries(nested_object).reduce(
+      createVariantsFromOptionalKey,
+      [nested_object]
+    );
+    return nested_optional_keys.map((variant) => {
+      const { [key]: _, ...rest } = raw_interface;
+      console.log({ variant, rest });
+      return rest;
+    });
+  }
+
+  if (key.includes("?")) {
+    const { [key]: _, ...rest } = raw_interface;
+    //console.log([rest]);
+    return [rest];
+  }
+};
+
+function createVariantsFromOptionalKey(
+  accumulated_variants,
+  current_key_value
+) {
+  const raw_interface = accumulated_variants[0];
+  const [key, value] = current_key_value;
+  /*
+  const variants_from_optional_key =
+    _getVariantsFromOptionalKey(raw_interface, current_key_value) ?? [];
+    */
+  const variants_from_optional_key = [];
+
+  if (key.includes("?")) {
+    const { [key]: _, ...rest } = raw_interface;
+    variants_from_optional_key.push(rest);
+  }
+
+  if (typeof value === "object") {
+    const test = Object.entries(value)
+      .reduce(createVariantsFromOptionalKey, [value])
+      .slice(1);
+
+    test.forEach((nested_variant) => {
+      const variant = { ...raw_interface, [key]: nested_variant };
+      variants_from_optional_key.push(variant);
+    });
+  }
+
+  return [...accumulated_variants, ...variants_from_optional_key];
+}
+
+export { createVariantsFromEntryValue, createVariantsFromOptionalKey };
