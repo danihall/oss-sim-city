@@ -3,10 +3,7 @@ import process from "node:process";
 
 import { SOURCE_OF_TRUTH } from "./_sourceOfTruth.mjs";
 import { createExportStatement } from "./createExportStatement.mjs";
-import {
-  createVariantsFromEntryValue,
-  createVariantsFromOptionalKey,
-} from "./createVariantsFromEntryValue.mjs";
+import { createVariantsFromEntry } from "./createVariantsFromEntryValue.mjs";
 import { getComponentNameAndPath } from "./getComponentNamesAndPath.mjs";
 import { COMPONENTS_PATH } from "./getConfig.mjs";
 import {
@@ -79,14 +76,11 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             sanitizeToParsableJson(interface_as_string)
           );
 
-          const interface_value_variants = Object.entries(raw_interface).reduce(
-            createVariantsFromEntryValue,
+          const interface_variants = Object.entries(raw_interface).reduce(
+            createVariantsFromEntry,
             [raw_interface]
           );
-          const interface_optional_key_variants = Object.entries(
-            raw_interface
-          ).reduce(createVariantsFromOptionalKey, [raw_interface]);
-          console.log(JSON.stringify(interface_optional_key_variants, null, 3));
+          console.log(interface_variants);
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
