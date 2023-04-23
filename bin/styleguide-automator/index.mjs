@@ -44,6 +44,25 @@ const _getFakeValueFromUserType = function (prop_type) {
 };
 
 /**
+ * @param {string} key
+ * @param {string} value
+ * @returns {string | object}
+ */
+const _removeDisjunctionAndList = (_, value) => {
+  if (typeof value === "string") {
+    let value_to_insert = value;
+    if (value.includes("[]")) {
+      value_to_insert = value.match(/(?:'|\w|\d)+/)[0];
+    }
+    if (value.includes("|")) {
+      value_to_insert = value.slice(0, value.indexOf("|"));
+    }
+    return isNaN(value_to_insert) ? value_to_insert : Number(value_to_insert);
+  }
+  return value;
+};
+
+/**
  * Some "meta-programming" is done when setting properties on SOURCE_OF_TRUTH.
  * Getters and functions are added to SOURCE_OF_TRUTH object.
  * When applying JSON.stringify() on SOURCE_OF_TRUTH, getters will be accessed and functions|undefined will then be discarded. (undefined will be discarde when in an object)
@@ -72,15 +91,19 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
-          const raw_interface = JSON.parse(
-            sanitizeToParsableJson(interface_as_string)
+          const interface_as_json = sanitizeToParsableJson(interface_as_string);
+
+          const raw_interface = JSON.parse(interface_as_json);
+          const model_interface = JSON.parse(
+            interface_as_json,
+            _removeDisjunctionAndList
           );
 
           const interface_variants = Object.entries(raw_interface).reduce(
             createVariantsFromEntry,
-            [raw_interface]
+            [model_interface]
           );
-          console.log(interface_variants);
+          //console.log(JSON.stringify(interface_variants));
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);

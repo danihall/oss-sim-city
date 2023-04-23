@@ -12,7 +12,7 @@ const FALSE_AND_TRUE = [false, true];
  */
 const _makeNewVariant = function (variant_value) {
   return {
-    ...this.raw_interface,
+    ...this.model_interface,
     [this.key]:
       typeof variant_value === "boolean" || isNaN(variant_value)
         ? variant_value
@@ -21,29 +21,31 @@ const _makeNewVariant = function (variant_value) {
 };
 
 /**
- * @param {object} raw_interface
+ * @param {object} model_interface
  * @param {array} current_key_value
  * @returns {array | undefined}
  */
-const _getVariantsFromKeyAndValue = (raw_interface, current_key_value) => {
+const _getVariantsFromKeyAndValue = (model_interface, current_key_value) => {
   const [key, value] = current_key_value;
+
   let temp = undefined;
   const variants_from_optional_key = key.includes("?")
-    ? (({ [key]: temp, ...temp } = raw_interface), [temp])
+    ? (({ [key]: temp, ...temp } = model_interface), [temp])
     : [];
 
   switch (typeof value) {
     case "object": {
+      const model_nested_interface = model_interface[key];
       const variants_from_nested_object = Object.entries(value)
-        .reduce(createVariantsFromEntry, [value])
+        .reduce(createVariantsFromEntry, [model_nested_interface])
         .slice(1) // must remove the first item, which is a shallow copy of the parent interface and, as such, a duplicate.
-        .map(_makeNewVariant, { raw_interface, key });
+        .map(_makeNewVariant, { model_interface, key });
       return [...variants_from_optional_key, ...variants_from_nested_object];
     }
     case "string": {
       if (value === BOOLEAN_TYPE) {
         const variants_from_boolean = FALSE_AND_TRUE.map(_makeNewVariant, {
-          raw_interface,
+          model_interface,
           key,
         });
         return [...variants_from_optional_key, ...variants_from_boolean];
@@ -53,20 +55,18 @@ const _getVariantsFromKeyAndValue = (raw_interface, current_key_value) => {
         const variants_from_disjunction = value
           .replace(REGEX_UNION, NOTHING)
           .split(UNION_OPERATOR)
-          .map(_makeNewVariant, { raw_interface, key });
+          .map(_makeNewVariant, { model_interface, key });
         return [...variants_from_optional_key, ...variants_from_disjunction];
       }
 
-      /*
       if (value.includes(ARRAY_OPERATOR)) {
         const item = value.replace(ARRAY_OPERATOR, NOTHING);
-        const variants
-        return [Array(3).fill(item)].map(_makeNewVariant, {
-          raw_interface,
+        const variant_array = [Array(3).fill(item)].map(_makeNewVariant, {
+          model_interface,
           key,
         });
+        return [...variants_from_optional_key, variant_array[0]];
       }
-      */
     }
   }
 };
@@ -83,9 +83,9 @@ const _getVariantsFromKeyAndValue = (raw_interface, current_key_value) => {
  * @returns {array}
  */
 function createVariantsFromEntry(accumulated_variants, current_key_value) {
-  const raw_interface = accumulated_variants[0];
+  const model_interface = accumulated_variants[0];
   const variants =
-    _getVariantsFromKeyAndValue(raw_interface, current_key_value) ?? [];
+    _getVariantsFromKeyAndValue(model_interface, current_key_value) ?? [];
 
   return [...accumulated_variants, ...variants];
 }
