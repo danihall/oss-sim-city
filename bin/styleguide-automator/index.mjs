@@ -51,14 +51,15 @@ const _getFakeValueFromUserType = function (prop_type) {
 const _removeDisjunctionAndList = (_, value) => {
   if (typeof value === "string") {
     let value_to_insert = value;
+
     if (value.includes("[]")) {
       value_to_insert = value.match(/(?:'|\w|\d)+/)[0];
-    }
-    if (value.includes("|")) {
+    } else if (value.includes("|")) {
       value_to_insert = value.slice(0, value.indexOf("|"));
     }
     return isNaN(value_to_insert) ? value_to_insert : Number(value_to_insert);
   }
+
   return value;
 };
 
@@ -103,7 +104,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             createVariantsFromEntry,
             [model_interface]
           );
-          //console.log(JSON.stringify(interface_variants));
+          console.log(JSON.stringify(interface_variants));
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
