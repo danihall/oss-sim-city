@@ -13,10 +13,7 @@ const FALSE_AND_TRUE = [false, true];
 const _makeNewVariant = function (variant_value) {
   return {
     ...this.model_interface,
-    [this.key]:
-      typeof variant_value === "boolean" || isNaN(variant_value)
-        ? variant_value
-        : Number(variant_value),
+    [this.key]: variant_value,
   };
 };
 

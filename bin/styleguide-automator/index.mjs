@@ -78,7 +78,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
     .then((content) => content.split("\n"));
 
   let interface_name = undefined;
-  let extended_interface = undefined;
+  let extended_interface_name = undefined;
 
   parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
@@ -88,7 +88,8 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
     if (interface_match) {
       let interface_as_string = "";
       interface_name = interface_match[0];
-      extended_interface = interface_match.length > 1 && interface_match[1];
+      extended_interface_name =
+        interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
@@ -104,7 +105,25 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
             createVariantsFromEntry,
             [model_interface]
           );
-          console.log(JSON.stringify(interface_variants));
+
+          Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
+            enumerable: true,
+            value: () => {
+              const extended_interface =
+                SOURCE_OF_TRUTH[extended_interface_name]?.();
+
+              return {
+                raw: {
+                  ...extended_interface?.raw,
+                  ...raw_interface,
+                },
+                model: {
+                  ...extended_interface?.model,
+                  ...model_interface,
+                },
+              };
+            },
+          });
 
           //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
           //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
@@ -196,6 +215,7 @@ const main = async () => {
     .join("");
 
   Promise.all(components_name_and_path.map(_updateSourceOfTruth))
+    .then(() => console.log(SOURCE_OF_TRUTH.IMessageAsLinkProps()))
     .then(() => createStyleguideDirectory())
     .then((styleguide_path) =>
       Promise.all([

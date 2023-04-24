@@ -41,8 +41,8 @@ const SOURCE_OF_TRUTH = {
     }).format(Date.now());
   },
   string_path() {
-    const randomIndex = Math.floor(Math.random() * IMAGES.length);
-    return IMAGES[randomIndex];
+    const random_index = Math.floor(Math.random() * IMAGES.length);
+    return IMAGES[random_index];
   },
   string_text() {
     return "Bacon ipsum dolor amet buffalo prosciutto corned beef ribeye, jerky shoulder cow short ribs frankfurter. Picanha swine rump jerky ground round kevin pastrami alcatra pork belly tenderloin cupim spare ribs ham frankfurter jowl.";
