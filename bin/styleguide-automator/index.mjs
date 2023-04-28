@@ -52,8 +52,12 @@ const _removeDisjunctionAndList = (_, value) => {
   if (typeof value === "string") {
     let value_to_insert = value;
 
+    if (!value.includes("'")) {
+      console.log(value);
+    }
+
     if (value.includes("[]")) {
-      value_to_insert = value.match(/(?:'|\w|\d)+/)[0];
+      value_to_insert = [value.match(/(?:'|\w|\d)+/)[0]];
     } else if (value.includes("|")) {
       value_to_insert = value.slice(0, value.indexOf("|"));
     }
@@ -71,7 +75,7 @@ const _removeDisjunctionAndList = (_, value) => {
  * @param {string} component_name
  * @param {string} path
  */
-const _updateSourceOfTruth = async ({ component_name, path }) => {
+const getInterfaceFromFile = async ({ component_name, path }) => {
   /** Could use createReadStream() and readLine(), but files are expected to be small. */
   const content_as_array = await fs.promises
     .readFile(path, "utf-8")
@@ -80,7 +84,7 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
   let interface_name = undefined;
   let extended_interface_name = undefined;
 
-  parent_loop: for (let i = 0; i < content_as_array.length; i++) {
+  for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
       .match(REGEX_INTERFACE)?.[0]
       .split(HINT_EXTENDS);
@@ -95,103 +99,27 @@ const _updateSourceOfTruth = async ({ component_name, path }) => {
         if (content_as_array[j] === CLOSE_BRACKET) {
           const interface_as_json = sanitizeToParsableJson(interface_as_string);
 
+          /*
           const raw_interface = JSON.parse(interface_as_json);
           const model_interface = JSON.parse(
             interface_as_json,
             _removeDisjunctionAndList
           );
-
           const interface_variants = Object.entries(raw_interface).reduce(
             createVariantsFromEntry,
             [model_interface]
           );
-
-          Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
-            enumerable: true,
-            value: () => {
-              const extended_interface =
-                SOURCE_OF_TRUTH[extended_interface_name]?.();
-
-              return {
-                raw: {
-                  ...extended_interface?.raw,
-                  ...raw_interface,
-                },
-                model: {
-                  ...extended_interface?.model,
-                  ...model_interface,
-                },
-              };
-            },
-          });
-
-          //const raw_props = JSON.parse(`{${fake_props_as_string}}`);
-          //const fake_props = JSON.parse(`{${fake_props_as_string}}`, _reviver);
-
-          /**
-           * Adds a function in SOURCE_OF_TRUTH for the interface that will be called automatically at JSON.stringify time.
-           * This interface is separated from the component so it can be accessed by other components.
-           */
-          /*
-          Object.defineProperty(SOURCE_OF_TRUTH, interface_name, {
-            value: () => ({
-              ...SOURCE_OF_TRUTH[extended_interface]?.(),
-              ...fake_props,
-            }),
-          });
-
-          // Adds the final infos and fake props (generated from the interface) of the component.
-          Object.defineProperty(SOURCE_OF_TRUTH, component_name, {
-            enumerable: true,
-            get() {
-              return {
-                info: {
-                  interface_name,
-                  raw_props,
-                },
-                get fake_props() {
-                  if (!(interface_name in SOURCE_OF_TRUTH)) {
-                    return null;
-                  }
-
-                  const fake_props = SOURCE_OF_TRUTH[interface_name]();
-                  const fake_props_variations = Object.entries(
-                    fake_props
-                  ).reduce(getPropsVariations, []);
-
-                  return fake_props_variations.length
-                    ? fake_props_variations.map(
-                        addPropVariantInPlace,
-                        fake_props
-                      )
-                    : [fake_props];
-                },
-              };
-            },
-          });
           */
 
-          break parent_loop;
+          return {
+            component_name,
+            interface_name,
+            extended_interface_name,
+            interface_as_json,
+          };
         }
 
         interface_as_string += content_as_array[j];
-
-        /*
-        interface_as_array.push(
-          content_as_array[j].replace(REGEX_SPACE, NOTHING)
-        );
-        */
-
-        /*
-        // Getters need to be set with "enumerable: true" or they won't be accessed at JSON.stringify time
-        Object.defineProperty(context, prop_key, {
-          enumerable: true,
-          get: () =>
-            fake_type in SOURCE_OF_TRUTH
-              ? SOURCE_OF_TRUTH[fake_type]()
-              : _getFakeValueFromUserType(fake_type),
-        });
-        */
       }
     }
   }
@@ -210,12 +138,60 @@ const main = async () => {
     component_folders.map(getComponentNameAndPath)
   ).then((result) => result.flat());
 
-  const components_export_statements = components_name_and_path
-    .map(createExportStatement)
-    .join("");
+  const [export_statements, ...rest] = await Promise.all([
+    components_name_and_path.map(createExportStatement),
+    ...components_name_and_path.map(getInterfaceFromFile),
+  ]);
 
-  Promise.all(components_name_and_path.map(_updateSourceOfTruth))
-    .then(() => console.log(SOURCE_OF_TRUTH.IMessageAsLinkProps()))
+  const test = {};
+  rest.forEach((component) => {
+    const {
+      component_name,
+      interface_name,
+      extended_interface_name,
+      interface_as_json,
+    } = component;
+
+    const raw_interface = JSON.parse(interface_as_json);
+    const model_interface = JSON.parse(
+      interface_as_json,
+      _removeDisjunctionAndList
+    );
+
+    Object.defineProperties(test, {
+      [component_name]: {
+        enumerable: true,
+        get() {
+          return this[interface_name]?.();
+        },
+      },
+      [interface_name]: {
+        enumerable: true,
+        value: function () {
+          const extended_interface = this[extended_interface_name]?.();
+          return {
+            raw_interface: {
+              ...extended_interface?.raw_interface,
+              ...raw_interface,
+            },
+            model_interface: {
+              ...extended_interface?.model_interface,
+              ...model_interface,
+            },
+          };
+        },
+      },
+    });
+  });
+
+  console.log(export_statements, test.MessagesPrompter);
+
+  /*
+  Promise.all([
+    ...components_name_and_path.map(getInterfaceFromFile),
+    components_name_and_path.map(createExportStatement),
+  ])
+    .then((result) => console.log(result))
     .then(() => createStyleguideDirectory())
     .then((styleguide_path) =>
       Promise.all([
@@ -240,6 +216,7 @@ const main = async () => {
       printProcessError(reason);
       process.exit(1);
     });
+    */
 };
 
 export { main };
