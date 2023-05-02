@@ -3,9 +3,10 @@ import css from "./Message.module.scss";
 
 interface IMessageAsLinkProps extends IMessageProps {
   to: string;
+  from: IMessageProps;
   dummy_list: number[];
   test?: {
-    truc: "prout" | "sisi" | "la" | "famille";
+    truc: "prout" | "sisi" | "la" | "famille" | IMessageProps;
     chiffre: 2;
     deep?: {
       deep_key: boolean;

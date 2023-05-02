@@ -16,6 +16,7 @@ import { printProcessSuccess, printProcessError } from "./printProcess.mjs";
 import { sanitizeToParsableJson } from "./sanitizeToParsableJson.mjs";
 
 const REGEX_INTERFACE = /(?<=interface\s)([aA-zZ]|[\s](?!{))+/;
+const HINT_FOREIGN_INTERFACE = "use@";
 const CLOSE_BRACKET = "}";
 const HINT_EXTENDS = " extends ";
 const HINT_ARRAY = "[]";
@@ -48,12 +49,21 @@ const _getFakeValueFromUserType = function (prop_type) {
  * @param {string} value
  * @returns {string | object}
  */
-const _removeDisjunctionAndList = (_, value) => {
+const _removeDisjunctionAndList = function (_, value) {
   if (typeof value === "string") {
     let value_to_insert = value;
 
-    if (!value.includes("'")) {
-      console.log(value);
+    if (value.startsWith(HINT_FOREIGN_INTERFACE)) {
+      //const context = this;//eslint-disable-line
+      const foreign_interface =
+        this[`${value.replace(HINT_FOREIGN_INTERFACE, "")}_json`];
+      value_to_insert = foreign_interface;
+      /*
+      value_to_insert = JSON.parse(
+        foreign_interface,
+        _removeDisjunctionAndList.bind(this)
+      );
+      */
     }
 
     if (value.includes("[]")) {
@@ -81,48 +91,43 @@ const getInterfaceFromFile = async ({ component_name, path }) => {
     .readFile(path, "utf-8")
     .then((content) => content.split("\n"));
 
-  let interface_name = undefined;
-  let extended_interface_name = undefined;
+  const component = {
+    component_name,
+    interface_name: undefined,
+    extended_interface_name: undefined,
+    interface_as_json: undefined,
+  };
 
-  for (let i = 0; i < content_as_array.length; i++) {
+  parent_loop: for (let i = 0; i < content_as_array.length; i++) {
     const interface_match = content_as_array[i]
       .match(REGEX_INTERFACE)?.[0]
       .split(HINT_EXTENDS);
 
     if (interface_match) {
+      component.interface_name = interface_match[0];
+      component.extended_interface_name = interface_match[1];
       let interface_as_string = "";
-      interface_name = interface_match[0];
-      extended_interface_name =
-        interface_match.length > 1 && interface_match[1];
 
       for (let j = i + 1; j < content_as_array.length; j++) {
         if (content_as_array[j] === CLOSE_BRACKET) {
-          const interface_as_json = sanitizeToParsableJson(interface_as_string);
-
-          /*
-          const raw_interface = JSON.parse(interface_as_json);
-          const model_interface = JSON.parse(
-            interface_as_json,
-            _removeDisjunctionAndList
+          component.interface_as_json = sanitizeToParsableJson(
+            interface_as_string,
+            component.extended_interface_name ?? ""
           );
+          /*
           const interface_variants = Object.entries(raw_interface).reduce(
             createVariantsFromEntry,
             [model_interface]
           );
           */
-
-          return {
-            component_name,
-            interface_name,
-            extended_interface_name,
-            interface_as_json,
-          };
+          break parent_loop;
         }
 
         interface_as_string += content_as_array[j];
       }
     }
   }
+  return component;
 };
 
 /**
@@ -138,24 +143,41 @@ const main = async () => {
     component_folders.map(getComponentNameAndPath)
   ).then((result) => result.flat());
 
-  const [export_statements, ...rest] = await Promise.all([
+  const [export_statements, ...components_interfaces] = await Promise.all([
     components_name_and_path.map(createExportStatement),
     ...components_name_and_path.map(getInterfaceFromFile),
   ]);
 
+  /*
+  Object.entries(raw_interface).reduce(createVariantsFromEntry, [
+    model_interface,
+  ]);
+  */
   const test = {};
-  rest.forEach((component) => {
+  components_interfaces.forEach(({ interface_name, interface_as_json }) => {
+    test[`${interface_name}_json`] = interface_as_json;
+  });
+
+  components_interfaces.forEach(({ interface_name }) => {
+    const obj = JSON.parse(
+      test[`${interface_name}_json`],
+      _removeDisjunctionAndList.bind(test)
+    );
+    console.log(obj);
+  });
+
+  /*
+  components_interfaces.forEach((component) => {
     const {
       component_name,
       interface_name,
       extended_interface_name,
       interface_as_json,
     } = component;
-
     const raw_interface = JSON.parse(interface_as_json);
     const model_interface = JSON.parse(
       interface_as_json,
-      _removeDisjunctionAndList
+      _removeDisjunctionAndList.bind(test)
     );
 
     Object.defineProperties(test, {
@@ -169,6 +191,7 @@ const main = async () => {
         enumerable: true,
         value: function () {
           const extended_interface = this[extended_interface_name]?.();
+
           return {
             raw_interface: {
               ...extended_interface?.raw_interface,
@@ -183,8 +206,9 @@ const main = async () => {
       },
     });
   });
+  */
 
-  console.log(export_statements, test.MessagesPrompter);
+  //console.log(export_statements, test.MessageAsLink);
 
   /*
   Promise.all([
